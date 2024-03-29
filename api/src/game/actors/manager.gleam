@@ -13,9 +13,11 @@ pub type GameManagerState {
     GameManagerState
 }
 
-fn handle_message(message: GameManagerMessage, _state: GameManagerState) -> actor.Next(GameManagerMessage, GameManagerState) {
-    case message {
-        Shutdown -> actor.Stop(process.Normal)
+fn handle_message(message: GameManagerMessage, state: GameManagerState) -> actor.Next(GameManagerMessage, GameManagerState) {
+    case state {
+        GameManagerState -> case message {
+            Shutdown -> actor.Stop(process.Normal)
+        }
     }
 }
 
