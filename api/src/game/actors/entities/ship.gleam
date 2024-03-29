@@ -30,3 +30,7 @@ pub fn create_ship(spawn_tick: Int) -> Result(Ship, Nil) {
         Error(_) -> Error(Nil)
     }
 }
+
+pub fn shutdown_ship(ship: Ship) -> Nil {
+    process.send(ship.actor, Shutdown)
+}
