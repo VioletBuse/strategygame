@@ -6,29 +6,32 @@ pub type Ship {
 }
 
 pub type ShipMessage {
-    Initialize(spawn_tick: Int)
     AdvanceTick
     Shutdown
 }
 
 pub type ShipState {
-    ShipState(spawn_tick: Int)
+    ShipState(tick: Int, spawn_tick: Int)
 }
 
 fn handle_message(message: ShipMessage, state: ShipState) -> actor.Next(ShipMessage, ShipState) {
     case state {
-        ShipState(_spawn_tick) -> case message {
+        ShipState(current_tick, _spawn_tick) -> case message {
             Shutdown -> actor.Stop(process.Normal)
-            _ -> actor.continue(state)
+            AdvanceTick -> actor.continue(ShipState(..state, tick: current_tick + 1))
         }
     }
 }
 
 pub fn create_ship(spawn_tick: Int) -> Result(Ship, Nil) {
-    case actor.start(ShipState(spawn_tick), handle_message) {
+    case actor.start(ShipState(0, spawn_tick), handle_message) {
         Ok(reference) -> Ok(Ship(reference))
         Error(_) -> Error(Nil)
     }
+}
+
+pub fn advance_tick(ship: Ship) -> Nil {
+    process.send(ship.actor, AdvanceTick)
 }
 
 pub fn shutdown_ship(ship: Ship) -> Nil {
