@@ -1,5 +1,4 @@
-// import gleam/erlang/process
-import game/actors/manager
+import game/manager
 
 pub type Game {
   Game(manager: manager.GameManager)
