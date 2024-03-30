@@ -1,4 +1,4 @@
-import game/manager
+import game/managers/manager
 
 pub type Game {
   Game(manager: manager.GameManager)
