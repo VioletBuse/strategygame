@@ -38,3 +38,18 @@ pub fn create_ship() -> Ship {
 
   Ship(actor)
 }
+
+pub fn get_pid(ship: Ship) -> Result(process.Pid, Nil) {
+  process.call(ship.actor, GetPid, 10)
+}
+
+pub fn link_process(ship: Ship) -> Result(Nil, Nil) {
+  case get_pid(ship) {
+    Ok(pid) ->
+      case process.link(pid) {
+        True -> Ok(Nil)
+        False -> Error(Nil)
+      }
+    Error(_) -> Error(Nil)
+  }
+}
