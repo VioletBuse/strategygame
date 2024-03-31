@@ -12,16 +12,16 @@ pub type TickerMessage {
   TickForward(reply_with: Subject(Result(TickSuccess, TickFailure)))
 }
 
+pub type TickerState {
+  TickerState
+}
+
 pub type TickSuccess {
   TickSuccess
 }
 
 pub type TickFailure {
   UnknownError
-}
-
-pub type TickerState {
-  TickerState
 }
 
 fn handle_message(
