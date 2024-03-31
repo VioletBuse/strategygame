@@ -9,13 +9,21 @@ pub type Outpost {
 pub type OutpostMessage {
   Shutdown
   GetPid(reply_with: Subject(Result(process.Pid, Nil)))
+  GetType(reply_with: Subject(OutpostType))
 }
 
-pub type OutpostState {
+pub type OutpostType {
   Factory
   Generator
   Mine
   Ruin
+}
+
+pub type OutpostState {
+  FactoryState
+  GeneratorState
+  MineState
+  RuinState
 }
 
 fn handle_message(
@@ -33,11 +41,33 @@ fn handle_message(
       process.send(client, pid)
       actor.continue(state)
     }
+    GetType(client) -> {
+      case state {
+        FactoryState -> {
+          process.send(client, Factory)
+        }
+        GeneratorState -> {
+          process.send(client, Generator)
+        }
+        MineState -> {
+          process.send(client, Mine)
+        }
+        RuinState -> {
+          process.send(client, Ruin)
+        }
+      }
+
+      actor.continue(state)
+    }
   }
 }
 
 pub fn get_outpost_pid(outpost: Outpost) -> Result(process.Pid, Nil) {
   process.call(outpost.actor, GetPid, 10)
+}
+
+pub fn get_outpost_type(outpost: Outpost) -> OutpostType {
+  process.call(outpost.actor, GetType, 10)
 }
 
 pub fn shutdown_outpost(outpost: Outpost) -> Nil {
@@ -56,7 +86,13 @@ pub fn link_outpost_process(outpost: Outpost) -> Result(Nil, Nil) {
 }
 
 pub fn create_factory() -> Outpost {
-  let assert Ok(actor) = actor.start(Factory, handle_message)
+  let assert Ok(actor) = actor.start(FactoryState, handle_message)
+
+  Outpost(actor)
+}
+
+pub fn create_generator() -> Outpost {
+  let assert Ok(actor) = actor.start(GeneratorState, handle_message)
 
   Outpost(actor)
 }
