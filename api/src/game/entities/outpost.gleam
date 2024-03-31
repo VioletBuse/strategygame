@@ -62,20 +62,20 @@ fn handle_message(
   }
 }
 
-pub fn get_outpost_pid(outpost: Outpost) -> Result(process.Pid, Nil) {
+pub fn get_pid(outpost: Outpost) -> Result(process.Pid, Nil) {
   process.call(outpost.actor, GetPid, 10)
 }
 
-pub fn get_outpost_type(outpost: Outpost) -> OutpostType {
+pub fn get_type(outpost: Outpost) -> OutpostType {
   process.call(outpost.actor, GetType, 10)
 }
 
-pub fn shutdown_outpost(outpost: Outpost) -> Nil {
+pub fn shutdown(outpost: Outpost) -> Nil {
   process.send(outpost.actor, Shutdown)
 }
 
-pub fn link_outpost_process(outpost: Outpost) -> Result(Nil, Nil) {
-  case get_outpost_pid(outpost) {
+pub fn link_process(outpost: Outpost) -> Result(Nil, Nil) {
+  case get_pid(outpost) {
     Ok(pid) ->
       case process.link(pid) {
         True -> Ok(Nil)
