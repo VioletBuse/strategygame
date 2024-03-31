@@ -1,30 +1,62 @@
-import ids/nanoid
-import game/utils/location.{type Location}
+import gleam/erlang/process.{type Subject}
+import gleam/otp/actor
+import gleam/dynamic
 
 pub type Outpost {
-    Factory(id: String, location: Location, units: Int)
-    Generator(id: String, location: Location, units: Int)
-    Mine(id: String, location: Location, units: Int)
-    Wreck(id: String, location: Location)
+  Outpost(actor: Subject(OutpostMessage))
 }
 
-pub fn create_factory(id: String, location: Location) -> Outpost {
-    Factory(id, location, 0)
+pub type OutpostMessage {
+  Shutdown
+  GetPid(reply_with: Subject(Result(process.Pid, Nil)))
 }
 
-pub fn create_generator(id: String, location: Location) -> Outpost {
-    Generator(id, location, 0)
+pub type OutpostState {
+  Factory
+  Generator
+  Mine
+  Ruin
 }
 
-pub fn advance_tick(outpost: Outpost) -> Outpost {
-    case outpost {
-        Wreck(id, location) -> Wreck(id, location)
-        Mine(id, location, units) -> Mine(id, location, units)
-        Generator(id, location, units) -> Generator(id, location, units)
-        Factory(id, location, units) -> Factory(id, location, units + 10)
+fn handle_message(
+  message: OutpostMessage,
+  state: OutpostState,
+) -> actor.Next(OutpostMessage, OutpostState) {
+  case message {
+    Shutdown -> actor.Stop(process.Normal)
+    GetPid(client) -> {
+      let pid = case process.pid_from_dynamic(dynamic.from(process.self())) {
+        Ok(pid) -> Ok(pid)
+        Error(_) -> Error(Nil)
+      }
+
+      process.send(client, pid)
+      actor.continue(state)
     }
+  }
 }
 
-pub fn generate_outpost_id() -> String {
-    nanoid.generate()
+pub fn get_outpost_pid(outpost: Outpost) -> Result(process.Pid, Nil) {
+  process.call(outpost.actor, GetPid, 10)
+}
+
+pub fn shutdown_outpost(outpost: Outpost) -> Nil {
+  process.send(outpost.actor, Shutdown)
+}
+
+pub fn link_outpost_process(outpost: Outpost) -> Result(Nil, Nil) {
+  case get_outpost_pid(outpost) {
+    Ok(pid) ->
+      case process.link(pid) {
+        True -> Ok(Nil)
+        False -> Error(Nil)
+      }
+    Error(_) -> Error(Nil)
+  }
+}
+
+pub fn create_factory() -> Outpost {
+  let assert Ok(actor) = actor.start(Factory, handle_message)
+
+  Outpost(actor)
 }
