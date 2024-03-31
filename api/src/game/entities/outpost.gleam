@@ -10,6 +10,7 @@ pub type OutpostMessage {
   Shutdown
   GetPid(reply_with: Subject(Result(process.Pid, Nil)))
   GetType(reply_with: Subject(OutpostType))
+  HandleTick(reply_with: Subject(Result(Nil, Nil)))
 }
 
 pub type OutpostType {
@@ -19,11 +20,19 @@ pub type OutpostType {
   Ruin
 }
 
-pub type OutpostState {
+pub type BaseOutpostState {
+  BaseOutpostState(units: Int)
+}
+
+pub type SpecializedOutpostState {
   FactoryState
   GeneratorState
   MineState
   RuinState
+}
+
+pub type OutpostState {
+  OutpostState(base: BaseOutpostState, specialized: SpecializedOutpostState)
 }
 
 fn handle_message(
@@ -42,7 +51,7 @@ fn handle_message(
       actor.continue(state)
     }
     GetType(client) -> {
-      case state {
+      case state.specialized {
         FactoryState -> {
           process.send(client, Factory)
         }
@@ -59,6 +68,19 @@ fn handle_message(
 
       actor.continue(state)
     }
+    HandleTick(client) ->
+      case state {
+        OutpostState(BaseOutpostState(units), FactoryState) -> {
+          let new_state =
+            OutpostState(..state, base: BaseOutpostState(units: units + 10))
+          process.send(client, Ok(Nil))
+          actor.continue(new_state)
+        }
+        _ -> {
+          process.send(client, Ok(Nil))
+          actor.continue(state)
+        }
+      }
   }
 }
 
@@ -74,6 +96,10 @@ pub fn shutdown(outpost: Outpost) -> Nil {
   process.send(outpost.actor, Shutdown)
 }
 
+pub fn handle_tick(outpost: Outpost) -> Result(Nil, Nil) {
+  process.call(outpost.actor, HandleTick, 10)
+}
+
 pub fn link_process(outpost: Outpost) -> Result(Nil, Nil) {
   case get_pid(outpost) {
     Ok(pid) ->
@@ -85,14 +111,22 @@ pub fn link_process(outpost: Outpost) -> Result(Nil, Nil) {
   }
 }
 
-pub fn create_factory() -> Outpost {
-  let assert Ok(actor) = actor.start(FactoryState, handle_message)
+pub fn create_factory(units: Int) -> Outpost {
+  let assert Ok(actor) =
+    actor.start(
+      OutpostState(BaseOutpostState(units), FactoryState),
+      handle_message,
+    )
 
   Outpost(actor)
 }
 
-pub fn create_generator() -> Outpost {
-  let assert Ok(actor) = actor.start(GeneratorState, handle_message)
+pub fn create_generator(units: Int) -> Outpost {
+  let assert Ok(actor) =
+    actor.start(
+      OutpostState(BaseOutpostState(units), GeneratorState),
+      handle_message,
+    )
 
   Outpost(actor)
 }
