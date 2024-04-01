@@ -1,6 +1,6 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
-import gleam/dynamic
+import utils/pid
 
 pub type Player {
   Player(actor: Subject(PlayerMessage))
@@ -22,12 +22,7 @@ fn handle_message(
   case message {
     Shutdown -> actor.Stop(process.Normal)
     GetPid(client) -> {
-      let pid = case process.pid_from_dynamic(dynamic.from(process.self())) {
-        Ok(pid) -> Ok(pid)
-        Error(_) -> Error(Nil)
-      }
-
-      process.send(client, pid)
+      pid.send_pid(client)
       actor.continue(state)
     }
   }
@@ -44,12 +39,6 @@ pub fn get_pid(player: Player) -> Result(process.Pid, Nil) {
 }
 
 pub fn link_process(player: Player) -> Result(Nil, Nil) {
-  case get_pid(player) {
-    Ok(pid) ->
-      case process.link(pid) {
-        True -> Ok(Nil)
-        False -> Error(Nil)
-      }
-    Error(_) -> Error(Nil)
-  }
+  get_pid(player)
+  |> pid.link_actor
 }

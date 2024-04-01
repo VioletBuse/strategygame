@@ -1,6 +1,6 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
-import gleam/dynamic
+import utils/pid
 
 pub type WorldManager {
   WorldManager(actor: Subject(WorldManagerMessage))
@@ -23,12 +23,7 @@ fn handle_message(
   case message {
     Shutdown -> actor.Stop(process.Normal)
     GetPid(client) -> {
-      let pid = case process.pid_from_dynamic(dynamic.from(process.self())) {
-        Ok(pid) -> Ok(pid)
-        Error(_) -> Error(Nil)
-      }
-
-      process.send(client, pid)
+      pid.send_pid(client)
       actor.continue(state)
     }
     GetSize(client) -> {
@@ -54,14 +49,8 @@ pub fn get_pid(manager: WorldManager) -> Result(process.Pid, Nil) {
 }
 
 pub fn link_process(manager: WorldManager) -> Result(Nil, Nil) {
-  case get_pid(manager) {
-    Ok(pid) ->
-      case process.link(pid) {
-        True -> Ok(Nil)
-        False -> Error(Nil)
-      }
-    Error(_) -> Error(Nil)
-  }
+  get_pid(manager)
+  |> pid.link_actor
 }
 
 pub fn get_size(manager: WorldManager) -> Int {
