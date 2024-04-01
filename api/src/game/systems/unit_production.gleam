@@ -32,3 +32,22 @@ fn handle_message(
     }
   }
 }
+
+pub fn create_unit_production_system() -> UnitProductionSystem {
+  let assert Ok(actor) = actor.start(UnitProductionSystemState, handle_message)
+
+  UnitProductionSystem(actor)
+}
+
+pub fn shutdown(ups: UnitProductionSystem) -> Nil {
+  process.send(ups.actor, Shutdown)
+}
+
+pub fn get_pid(ups: UnitProductionSystem) -> Result(process.Pid, Nil) {
+  process.call(ups.actor, GetPid, 10)
+}
+
+pub fn link_process(ups: UnitProductionSystem) -> Result(Nil, Nil) {
+  get_pid(ups)
+  |> pid.link_actor
+}
