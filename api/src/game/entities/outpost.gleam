@@ -101,3 +101,23 @@ pub fn create_generator(units: Int) -> Outpost {
 
   Outpost(actor)
 }
+
+pub fn create_mine(units: Int) -> Outpost {
+  let assert Ok(actor) =
+    actor.start(
+      OutpostState(BaseOutpostState(units), MineState),
+      handle_message,
+    )
+
+  Outpost(actor)
+}
+
+pub fn create_ruin(units: Int) -> Outpost {
+  let assert Ok(actor) =
+    actor.start(
+      OutpostState(BaseOutpostState(units), RuinState),
+      handle_message,
+    )
+
+  Outpost(actor)
+}
