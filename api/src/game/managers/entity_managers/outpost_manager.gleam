@@ -1,5 +1,6 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
+import gleam/list
 import utils/pid
 import game/entities/outpost
 
@@ -11,6 +12,11 @@ pub type OutpostManagerMessage {
   Shutdown
   GetPid(reply_with: Subject(Result(process.Pid, Nil)))
   CreateOutpost(outpost_type: outpost.OutpostType, units: Int)
+  ListOutposts(reply_with: Subject(List(outpost.Outpost)))
+  ListOutpostsOfType(
+    reply_with: Subject(List(outpost.Outpost)),
+    outpost_type: outpost.OutpostType,
+  )
 }
 
 pub type OutpostManagerState {
@@ -43,6 +49,31 @@ fn handle_create_outpost(
   }
 }
 
+fn handle_list_outposts(
+  message: OutpostManagerMessage,
+  state: OutpostManagerState,
+) -> actor.Next(OutpostManagerMessage, OutpostManagerState) {
+  let assert ListOutposts(client) = message
+
+  process.send(client, state.outposts)
+  actor.continue(state)
+}
+
+fn handle_list_outposts_of_type(
+  message: OutpostManagerMessage,
+  state: OutpostManagerState,
+) -> actor.Next(OutpostManagerMessage, OutpostManagerState) {
+  let assert ListOutpostsOfType(client, outpost_type) = message
+
+  let outpost_list =
+    state.outposts
+    |> list.filter(fn(outpost) { outpost.get_type(outpost) == outpost_type })
+
+  process.send(client, outpost_list)
+
+  actor.continue(state)
+}
+
 fn handle_message(
   message: OutpostManagerMessage,
   state: OutpostManagerState,
@@ -54,7 +85,32 @@ fn handle_message(
       actor.continue(state)
     }
     CreateOutpost(_, _) -> handle_create_outpost(message, state)
+    ListOutposts(_) -> handle_list_outposts(message, state)
+    ListOutpostsOfType(_, _) -> handle_list_outposts_of_type(message, state)
   }
+}
+
+pub fn create_outpost(
+  manager: OutpostManager,
+  outpost_type outpost_type: outpost.OutpostType,
+  units units: Int,
+) -> Nil {
+  process.send(manager.actor, CreateOutpost(outpost_type, units))
+}
+
+pub fn list_outposts(manager: OutpostManager) -> List(outpost.Outpost) {
+  process.call(manager.actor, ListOutposts, 10)
+}
+
+pub fn list_outposts_by_type(
+  manager: OutpostManager,
+  outpost_type outpost_type: outpost.OutpostType,
+) -> List(outpost.Outpost) {
+  let fetcher = fn(subject: Subject(List(outpost.Outpost))) -> OutpostManagerMessage {
+    ListOutpostsOfType(subject, outpost_type)
+  }
+
+  process.call(manager.actor, fetcher, 10)
 }
 
 pub fn create_outpost_manager() -> OutpostManager {
