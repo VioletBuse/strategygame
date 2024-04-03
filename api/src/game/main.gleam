@@ -5,7 +5,7 @@ pub type Game {
 }
 
 pub fn create_game() -> Game {
-  let assert Ok(manager) = manager.create_game_manager()
+  let manager = manager.create_game_manager()
 
   Game(manager)
 }

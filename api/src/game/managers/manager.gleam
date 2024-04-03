@@ -1,8 +1,6 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
 import utils/pid
-import game/managers/entity_managers/outpost_manager
-import game/systems/unit_production
 
 pub type GameManager {
   GameManager(actor: process.Subject(GameManagerMessage))
@@ -18,15 +16,7 @@ pub type GameManagerMessage {
 }
 
 pub type GameManagerState {
-  GameManagerState(entity_managers: EntityManagers, systems: Systems)
-}
-
-pub type EntityManagers {
-  EntityManagers(outposts: outpost_manager.OutpostManager)
-}
-
-pub type Systems {
-  Systems(unit_production: unit_production.UnitProductionSystem)
+  GameManagerState
 }
 
 fn handle_message(

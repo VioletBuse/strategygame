@@ -13,9 +13,10 @@ version = "1.0.0"
 # https://gleam.run/writing-gleam/gleam-toml/. 
 
 [dependencies]
-gleam_stdlib = "~> 0.34 or ~> 1.0"
-gleam_otp = "~> 0.10"
+game = {path = "../game"}
 gleam_erlang = "~> 0.25"
+gleam_otp = "~> 0.10"
+gleam_stdlib = "~> 0.34 or ~> 1.0"
 ids = "~> 0.12"
 
 [dev-dependencies]
