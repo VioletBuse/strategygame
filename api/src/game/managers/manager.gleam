@@ -1,6 +1,8 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
 import utils/pid
+import game/managers/entity_managers/outpost_manager
+import game/systems/unit_production
 
 pub type GameManager {
   GameManager(actor: process.Subject(GameManagerMessage))
@@ -16,7 +18,15 @@ pub type GameManagerMessage {
 }
 
 pub type GameManagerState {
-  GameManagerState
+  GameManagerState(entity_managers: EntityManagers, systems: Systems)
+}
+
+pub type EntityManagers {
+  EntityManagers(outposts: outpost_manager.OutpostManager)
+}
+
+pub type Systems {
+  Systems(unit_production: unit_production.UnitProductionSystem)
 }
 
 fn handle_message(
@@ -32,11 +42,9 @@ fn handle_message(
   }
 }
 
-pub fn create_game_manager() -> Result(GameManager, GameManagerInitError) {
-  case actor.start(GameManagerState, handle_message) {
-    Ok(reference) -> Ok(GameManager(reference))
-    Error(_) -> Error(UnknownError)
-  }
+pub fn create_game_manager() -> GameManager {
+  let assert Ok(actor) = actor.start(GameManagerState, handle_message)
+  GameManager(actor)
 }
 
 pub fn shutdown(manager: GameManager) -> Nil {

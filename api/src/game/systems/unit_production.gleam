@@ -1,6 +1,7 @@
 import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
 import utils/pid
+import game/managers/manager.{type EntityManagers, type Systems}
 
 pub type UnitProductionSystem {
   UnitProductionSystem(actor: Subject(UnitProductionSystemMessage))
@@ -9,7 +10,11 @@ pub type UnitProductionSystem {
 pub type UnitProductionSystemMessage {
   Shutdown
   GetPid(reply_with: Subject(Result(process.Pid, Nil)))
-  RunTick(reply_with: Subject(Result(Nil, Nil)))
+  RunTick(
+    reply_with: Subject(Result(Nil, Nil)),
+    managers: manager.EntityManagers,
+    systems: manager.Systems,
+  )
 }
 
 pub type UnitProductionSystemState {
@@ -37,6 +42,14 @@ pub fn create_unit_production_system() -> UnitProductionSystem {
   let assert Ok(actor) = actor.start(UnitProductionSystemState, handle_message)
 
   UnitProductionSystem(actor)
+}
+
+pub fn run_tick(
+  ups: UnitProductionSystem,
+  managers: manager.EntityManagers,
+  systems: manager.Systems,
+) -> Result(Nil, Nil) {
+  process.call(ups.actor, RunTick(_, managers, systems))
 }
 
 pub fn shutdown(ups: UnitProductionSystem) -> Nil {

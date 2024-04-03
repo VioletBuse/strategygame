@@ -106,11 +106,7 @@ pub fn list_outposts_by_type(
   manager: OutpostManager,
   outpost_type outpost_type: outpost.OutpostType,
 ) -> List(outpost.Outpost) {
-  let fetcher = fn(subject: Subject(List(outpost.Outpost))) -> OutpostManagerMessage {
-    ListOutpostsOfType(subject, outpost_type)
-  }
-
-  process.call(manager.actor, fetcher, 10)
+  process.call(manager.actor, ListOutpostsOfType(_, outpost_type), 10)
 }
 
 pub fn create_outpost_manager() -> OutpostManager {
