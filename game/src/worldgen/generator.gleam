@@ -1,7 +1,6 @@
-import ecs/entities/outposts.{type OutpostType, Outpost}
+import ecs/entities/outposts.{type Outpost}
 import ecs/world.{type World, World}
 import gleam/float
-import gleam/int
 
 pub fn generate_outposts(
   world: World,
@@ -16,35 +15,38 @@ pub fn generate_outposts(
   World(..world, outposts: outposts)
 }
 
-type InternalGenerationPoint {
+pub type InternalGenerationPoint {
   Point(x: Float, y: Float)
   NoPointGenerated
 }
 
-type InternalGenerationGrid {
-  Grid(points: List(List(InternalGenerationPoint)), square_size: Float)
-}
-
 fn internal_initial_generate_outposts(
-  size: Float,
-  seed: Int,
-  min_distance min_distance: Float,
-  retries retries: Int,
+  _size: Float,
+  _seed: Int,
+  min_distance _min_distance: Float,
+  retries _retries: Int,
 ) -> List(Outpost) {
-  todo
+  []
 }
 
-fn internal_generate_empty_grid(
+// fn loop_over_grid(
+//   grid: List(List(InternalGenerationPoint)),
+//   square_count: Int,
+//   x_index: Int,
+//   y_index: Int,
+//   min_distance: Float,
+//   retries: Int,
+// ) -> List(List(InternalGenerationPoint)) {
+// }
+
+pub fn internal_generate_empty_grid(
   size: Float,
   min_distance: Float,
-) -> InternalGenerationGrid {
-  let square_count = float.round(size / min_distance)
-  let square_size = size / int.to_float(square_count)
+) -> List(List(InternalGenerationPoint)) {
+  let square_count = float.round(size /. min_distance)
+  //   let square_size = size /. int.to_float(square_count)
 
-  InternalGenerationGrid(
-    internal_generate_empty_grid_horizontal_loop(square_count, square_count, []),
-    min_distance,
-  )
+  internal_generate_empty_grid_horizontal_loop(square_count, square_count, [])
 }
 
 fn internal_generate_empty_grid_horizontal_loop(
@@ -55,7 +57,7 @@ fn internal_generate_empty_grid_horizontal_loop(
   case num {
     0 -> acc
     _ ->
-      internal_generate_empty_grid_horizontal_loop(num - 1, [
+      internal_generate_empty_grid_horizontal_loop(num - 1, height, [
         internal_generate_empty_grid_vertical_loop(height, []),
         ..acc
       ])
@@ -75,5 +77,3 @@ fn internal_generate_empty_grid_vertical_loop(
       ])
   }
 }
-
-fn generate_outpost_in_square()
