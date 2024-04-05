@@ -127,56 +127,43 @@ fn process_grid_loop_one(in: List(List(Result(#(Float, Float), Nil)))) -> Grid {
   }
 }
 
-fn window_internal_translate(
-  grid: Grid,
-  size: Result(#(Int, Int), Nil),
-  location: Result(#(Int, Int), Nil),
-  x: Int,
-  y: Int,
-) -> Result(Entry, Nil) {
-  case location, size {
-    Error(_), _ | _, Error(_) -> Error(Nil)
-    Ok(#(loc_x, loc_y)), Ok(#(width, height)) ->
-      case
-        at_point(
-          grid,
-          clamped_point(Ok(#(width, height)), loc_x + x, loc_y + y),
-        )
-      {
-        Ok(entry) ->
-          Ok(translate_entry(entry, int.to_float(x), int.to_float(y)))
-        Error(_) -> Error(Nil)
-      }
-  }
-}
-
 pub fn window(grid: Grid, x: Int, y: Int) -> Result(Grid, Nil) {
-  let size = size(grid)
-  let location = Ok(#(x, y))
+  size(grid)
+  |> result.map(fn(dimensions) {
+    case dimensions {
+      #(width, height) if width < 3 || height < 3 || x > width || y > height ->
+        Error(Nil)
+      _ -> Ok(dimensions)
+    }
+  })
+  |> result.flatten
+  |> result.map(fn(dimensions) {
+    let #(width, _) = dimensions
 
-  process_window_grid(
-    [
-      [
-        window_internal_translate(grid, size, location, -1, 1),
-        window_internal_translate(grid, size, location, 0, 1),
-        window_internal_translate(grid, size, location, 1, 1),
-      ],
-      [
-        window_internal_translate(grid, size, location, -1, 0),
-        window_internal_translate(grid, size, location, 0, 0),
-        window_internal_translate(grid, size, location, 1, 0),
-      ],
-      [
-        window_internal_translate(grid, size, location, -1, -1),
-        window_internal_translate(grid, size, location, 0, -1),
-        window_internal_translate(grid, size, location, 1, -1),
-      ],
-    ],
-    Ok(#(3, 3)),
-  )
-}
-
-fn translate_entry(entry: Entry, x: Float, y: Float) -> Entry {
-  let #(prev_x, prev_y) = entry
-  #(prev_x +. x, prev_y +. y)
+    case list.at(grid, 0), list.at(grid, width - 1) {
+      Ok(row_one), Ok(last_row) ->
+        Ok(list.concat([[last_row], grid, [row_one]]))
+      _, _ -> Error(Nil)
+    }
+  })
+  |> result.flatten
+  |> result.map(list.map(_, fn(row) {
+    case list.at(row, 0), list.at(row, list.length(row) - 1) {
+      Ok(cell_one), Ok(last_cell) -> list.concat([[last_cell], row, [cell_one]])
+      _, _ -> panic as "cells in this list don't exist for some reason"
+    }
+  }))
+  |> result.map(fn(list) {
+    case list.at(list.window(list, 3), x) {
+      Ok(rows_window) -> Ok(rows_window)
+      Error(_) -> Error(Nil)
+    }
+  })
+  |> result.flatten
+  |> result.map(list.map(_, fn(row) {
+    case list.at(list.window(row, 3), y) {
+      Ok(row_window) -> row_window
+      Error(_) -> panic as "window should exist"
+    }
+  }))
 }
