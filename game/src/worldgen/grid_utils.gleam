@@ -80,51 +80,40 @@ pub fn write_point(
   y: Int,
   value: #(Float, Float),
 ) -> Result(Grid, Nil) {
-  case size(grid) {
-    Error(_) -> Error(Nil)
-    Ok(#(width, height)) if width <= x || height <= y -> Error(Nil)
-    _ -> {
-      let #(before, last) = list.split(grid, x)
-      case last {
-        [] -> panic as "row does not exist"
-        [row, ..rest] -> {
-          let #(row_before, row_last) = list.split(row, y)
-          case row_last {
-            [] -> panic as "cell does not exist"
-            [_, ..row_rest] ->
-              Ok(
-                list.concat([
-                  before,
-                  [list.concat([row_before, [value], row_rest])],
-                  rest,
-                ]),
-              )
-          }
-        }
-      }
+  size(grid)
+  |> result.map(fn(size) {
+    case size {
+      #(width, height) if width <= x || height <= y -> Error(Nil)
+      _ -> Ok(size)
     }
-  }
-}
+  })
+  |> result.flatten
+  |> result.map(fn(_size) {
+    case list.split(grid, x) {
+      #(before, [row, ..after]) -> Ok(#(before, row, after))
+      _ -> Error(Nil)
+    }
+  })
+  |> result.flatten
+  |> result.map(fn(tuple) {
+    let #(rows_before, row, rows_after) = tuple
 
-fn process_window_grid(
-  in: List(List(Result(#(Float, Float), Nil))),
-  original_size: Result(#(Int, Int), Nil),
-) -> Result(Grid, Nil) {
-  let processed = process_grid_loop_one(in)
+    case list.split(row, y) {
+      #(cells_before, [_cell, ..cells_after]) ->
+        Ok(#(rows_before, cells_before, cells_after, rows_after))
+      _ -> Error(Nil)
+    }
+  })
+  |> result.flatten
+  |> result.map(fn(tuple) {
+    let #(rows_before, cells_before, cells_after, rows_after) = tuple
 
-  case size(processed), original_size {
-    _, Error(_) -> Error(Nil)
-    new_size, old_size if new_size != old_size -> Error(Nil)
-    _, _ -> Ok(processed)
-  }
-}
-
-fn process_grid_loop_one(in: List(List(Result(#(Float, Float), Nil)))) -> Grid {
-  case in {
-    [] -> []
-    [single] -> [result.values(single)]
-    [first, ..rest] -> [result.values(first), ..process_grid_loop_one(rest)]
-  }
+    list.concat([
+      rows_before,
+      [list.concat([cells_before, [value], cells_after])],
+      rows_after,
+    ])
+  })
 }
 
 pub fn window(grid: Grid, x: Int, y: Int) -> Result(Grid, Nil) {
