@@ -87,17 +87,17 @@ pub fn clamp_should_change_both_negative_test() {
   |> should.equal(Ok(#(6, 7)))
 }
 
-pub fn get_at_empty_grid() {
+pub fn get_at_empty_grid_test() {
   grid_utils.at_point([], Ok(#(2, 3)))
   |> should.equal(Error(Nil))
 }
 
-pub fn get_at_one_one_grid() {
+pub fn get_at_one_one_grid_test() {
   grid_utils.at_point([[dummy]], Ok(#(0, 0)))
   |> should.equal(Ok(dummy))
 }
 
-pub fn get_at_grid() {
+pub fn get_at_grid_test() {
   grid_utils.at_point(
     [
       [dummy, dummy, dummy],
@@ -107,4 +107,19 @@ pub fn get_at_grid() {
     Ok(#(2, 1)),
   )
   |> should.equal(Ok(#(0.23, 0.45)))
+}
+
+pub fn grid_write_basic_test() {
+  grid_utils.write_point([[dummy, dummy], [dummy, dummy]], 0, 1, #(0.0, 0.0))
+  |> should.equal(Ok([[dummy, #(0.0, 0.0)], [dummy, dummy]]))
+}
+
+pub fn grid_write_out_of_bounds_test() {
+  grid_utils.write_point(
+    [[dummy, dummy, dummy], [dummy, dummy, dummy]],
+    2,
+    5,
+    #(4.5, 6.7),
+  )
+  |> should.equal(Error(Nil))
 }
