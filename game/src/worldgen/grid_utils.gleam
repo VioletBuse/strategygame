@@ -74,6 +74,38 @@ pub fn at_point(
   }
 }
 
+pub fn write_point(
+  grid: Grid,
+  x: Int,
+  y: Int,
+  value: #(Float, Float),
+) -> Result(Grid, Nil) {
+  case size(grid) {
+    Error(_) -> Error(Nil)
+    Ok(#(width, height)) if width <= x || height <= y -> Error(Nil)
+    _ -> {
+      let #(before, last) = list.split(grid, x)
+      case last {
+        [] -> panic as "row does not exist"
+        [row, ..rest] -> {
+          let #(row_before, row_last) = list.split(row, y)
+          case row_last {
+            [] -> panic as "cell does not exist"
+            [_, ..row_rest] ->
+              Ok(
+                list.concat([
+                  before,
+                  [list.concat([row_before, [value], row_rest])],
+                  rest,
+                ]),
+              )
+          }
+        }
+      }
+    }
+  }
+}
+
 fn process_window_grid(
   in: List(List(Result(#(Float, Float), Nil))),
   original_size: Result(#(Int, Int), Nil),
