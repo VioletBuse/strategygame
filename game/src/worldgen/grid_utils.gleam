@@ -117,6 +117,33 @@ pub fn write_point(
   })
 }
 
+pub fn iterate(
+  grid: Grid,
+  function: fn(Grid, Int, Int) -> Grid,
+) -> Result(Grid, Nil) {
+  case size(grid) {
+    Ok(#(width, height)) ->
+      Ok(iterate_loop(grid, width, height, 0, 0, function))
+    Error(_) -> Error(Nil)
+  }
+}
+
+fn iterate_loop(
+  grid: Grid,
+  width: Int,
+  height: Int,
+  x: Int,
+  y: Int,
+  function: fn(Grid, Int, Int) -> Grid,
+) -> Grid {
+  case x, y {
+    _, _ if y >= height -> grid
+    _, _ if x >= width -> iterate_loop(grid, width, height, 0, y + 1, function)
+    _, _ ->
+      iterate_loop(function(grid, x, y), width, height, x + 1, y, function)
+  }
+}
+
 pub fn distance(
   grid: Grid,
   from: #(Int, Int),

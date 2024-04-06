@@ -1,4 +1,5 @@
 import worldgen/grid_utils
+import gleam/int
 import gleeunit/should
 
 const dummy = #(0.23, 4.56)
@@ -122,4 +123,25 @@ pub fn grid_write_out_of_bounds_test() {
     #(4.5, 6.7),
   )
   |> should.equal(Error(Nil))
+}
+
+pub fn iterate_basic_test() {
+  grid_utils.iterate(
+    [[dummy, dummy, dummy], [dummy, dummy, dummy], [dummy, dummy, dummy]],
+    fn(grid, x, y) {
+      case
+        grid_utils.write_point(grid, x, y, #(int.to_float(x), int.to_float(y)))
+      {
+        Ok(grid) -> grid
+        _ -> panic as "should be able to run"
+      }
+    },
+  )
+  |> should.equal(
+    Ok([
+      [#(0.0, 0.0), #(0.0, 1.0), #(0.0, 2.0)],
+      [#(1.0, 0.0), #(1.0, 1.0), #(1.0, 2.0)],
+      [#(2.0, 0.0), #(2.0, 1.0), #(2.0, 2.0)],
+    ]),
+  )
 }
