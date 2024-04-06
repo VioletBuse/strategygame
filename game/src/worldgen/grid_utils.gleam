@@ -225,3 +225,45 @@ pub fn window(grid: Grid, x: Int, y: Int) -> Result(Grid, Nil) {
     }
   }))
 }
+
+pub fn export_grid(grid: Grid) -> List(#(Float, Float)) {
+  let #(_, adjusted_grid) =
+    list.map_fold(grid, 0, fn(x, row) {
+      let #(_, adjusted_row) =
+        list.map_fold(row, 0, fn(y, cell) {
+          let #(cell_x, cell_y) = cell
+          #(y + 1, #(cell_x, cell_y, x, y))
+        })
+
+      #(x + 1, adjusted_row)
+    })
+
+  export_grid_loop(adjusted_grid, [])
+  |> list.map(fn(val) {
+    let #(x, y, grid_x, grid_y) = val
+    let #(grid_x_f, grid_y_f) = #(int.to_float(grid_x), int.to_float(grid_y))
+    #(x +. grid_x_f, y +. grid_y_f)
+  })
+}
+
+fn export_grid_loop(
+  grid: List(List(#(Float, Float, Int, Int))),
+  acc: List(#(Float, Float, Int, Int)),
+) {
+  let filterfn = fn(val: #(Float, Float, Int, Int)) -> Bool {
+    case val {
+      #(x, y, _, _) if x <. 0.0 || y <. 0.0 -> False
+      _ -> True
+    }
+  }
+
+  case grid {
+    [] -> acc
+    [last_list] -> list.concat([list.filter(last_list, filterfn), acc])
+    [first_list, ..rest] ->
+      list.concat([
+        list.filter(first_list, filterfn),
+        export_grid_loop(rest, acc),
+      ])
+  }
+}

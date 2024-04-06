@@ -4,6 +4,8 @@ import gleeunit/should
 
 const dummy = #(0.23, 4.56)
 
+const empty = #(-1.0, -1.0)
+
 pub fn zero_size_sizing_test() {
   grid_utils.size([])
   |> should.equal(Ok(#(0, 0)))
@@ -144,4 +146,37 @@ pub fn iterate_basic_test() {
       [#(2.0, 0.0), #(2.0, 1.0), #(2.0, 2.0)],
     ]),
   )
+}
+
+pub fn export_empty_grid_test() {
+  grid_utils.export_grid([])
+  |> should.equal([])
+}
+
+pub fn export_empty_grid_2_test() {
+  grid_utils.export_grid([
+    [empty, empty, empty, empty],
+    [empty, empty, empty, empty],
+    [empty, empty, empty, empty],
+    [empty, empty, empty, empty],
+  ])
+  |> should.equal([])
+}
+
+pub fn export_grid_with_one_point_test() {
+  grid_utils.export_grid([
+    [empty, empty, empty, #(0.5, 0.5), empty],
+    [empty, empty, empty, empty, empty],
+    [empty, empty, empty, empty, empty],
+  ])
+  |> should.equal([#(0.5, 3.5)])
+}
+
+pub fn export_grid_with_two_points_test() {
+  grid_utils.export_grid([
+    [empty, #(0.5, 0.5), empty],
+    [empty, empty, empty],
+    [empty, empty, #(0.5, 0.5)],
+  ])
+  |> should.equal([#(0.5, 1.5), #(2.5, 2.5)])
 }
