@@ -176,34 +176,42 @@ pub fn distance(
   let point_from = at_point(grid, Ok(from))
   let point_to = at_point(grid, Ok(to))
 
-  let transformed = case point_from, point_to {
-    Ok(#(x1, y1)), Ok(#(x2, y2)) ->
-      Ok(
-        #(#(x1 +. int.to_float(x_from), y1 +. int.to_float(y_from)), #(
-          x2 +. int.to_float(x_to),
-          y2 +. int.to_float(y_to),
-        )),
-      )
-    _, _ -> Error(Nil)
+  case point_from, point_to {
+    Ok(#(x1, y1)), Ok(#(x2, y2))
+      if x1 <. 0.0 || x2 <. 0.0 || y1 <. 0.0 || y2 <. 0.0
+    -> Error(Nil)
+
+    _, _ -> {
+      let transformed = case point_from, point_to {
+        Ok(#(x1, y1)), Ok(#(x2, y2)) ->
+          Ok(
+            #(#(x1 +. int.to_float(x_from), y1 +. int.to_float(y_from)), #(
+              x2 +. int.to_float(x_to),
+              y2 +. int.to_float(y_to),
+            )),
+          )
+        _, _ -> Error(Nil)
+      }
+
+      transformed
+      |> result.map(fn(points) {
+        let #(#(x1, y1), #(x2, y2)) = points
+
+        case float.power(x2 -. x1, 2.0), float.power(y2 -. y1, 2.0) {
+          Ok(term1), Ok(term2) -> Ok(term1 +. term2)
+          _, _ -> Error(Nil)
+        }
+      })
+      |> result.flatten
+      |> result.map(fn(distance2) {
+        case float.square_root(distance2) {
+          Ok(dist) -> Ok(dist)
+          _ -> Error(Nil)
+        }
+      })
+      |> result.flatten
+    }
   }
-
-  transformed
-  |> result.map(fn(points) {
-    let #(#(x1, y1), #(x2, y2)) = points
-
-    case float.power(x2 -. x1, 2.0), float.power(y2 -. y1, 2.0) {
-      Ok(term1), Ok(term2) -> Ok(term1 +. term2)
-      _, _ -> Error(Nil)
-    }
-  })
-  |> result.flatten
-  |> result.map(fn(distance2) {
-    case float.square_root(distance2) {
-      Ok(dist) -> Ok(dist)
-      _ -> Error(Nil)
-    }
-  })
-  |> result.flatten
 }
 
 pub fn window(grid: Grid, x: Int, y: Int) -> Result(Grid, Nil) {
