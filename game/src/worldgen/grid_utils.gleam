@@ -121,26 +121,47 @@ pub fn iterate(
   grid: Grid,
   function: fn(Grid, Int, Int) -> Grid,
 ) -> Result(Grid, Nil) {
+  let adj_fn = fn(grid: Grid, x: Int, y: Int) { Ok(function(grid, x, y)) }
+
+  case size(grid) {
+    Ok(#(width, height)) -> iterate_loop(Ok(grid), width, height, 0, 0, adj_fn)
+    Error(_) -> Error(Nil)
+  }
+}
+
+pub fn iterate_result(
+  grid: Grid,
+  function: fn(Grid, Int, Int) -> Result(Grid, Nil),
+) -> Result(Grid, Nil) {
   case size(grid) {
     Ok(#(width, height)) ->
-      Ok(iterate_loop(grid, width, height, 0, 0, function))
+      iterate_loop(Ok(grid), width, height, 0, 0, function)
     Error(_) -> Error(Nil)
   }
 }
 
 fn iterate_loop(
-  grid: Grid,
+  grid: Result(Grid, Nil),
   width: Int,
   height: Int,
   x: Int,
   y: Int,
-  function: fn(Grid, Int, Int) -> Grid,
-) -> Grid {
-  case x, y {
-    _, _ if y >= height -> grid
-    _, _ if x >= width -> iterate_loop(grid, width, height, 0, y + 1, function)
-    _, _ ->
-      iterate_loop(function(grid, x, y), width, height, x + 1, y, function)
+  function: fn(Grid, Int, Int) -> Result(Grid, Nil),
+) -> Result(Grid, Nil) {
+  case grid {
+    Ok(grid) ->
+      case x, y {
+        _, _ if y >= height -> Ok(grid)
+        _, _ if x >= width ->
+          iterate_loop(Ok(grid), width, height, 0, y + 1, function)
+        _, _ ->
+          case function(grid, x, y) {
+            Ok(new_grid) ->
+              iterate_loop(Ok(new_grid), width, height, x + 1, y, function)
+            Error(_) -> Error(Nil)
+          }
+      }
+    Error(_) -> Error(Nil)
   }
 }
 
