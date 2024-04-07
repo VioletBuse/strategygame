@@ -2,6 +2,7 @@ import gleam/list
 import gleam/int
 import gleam/float
 import gleam/result
+import gleam/io
 
 type Entry =
   #(Float, Float)
@@ -253,6 +254,116 @@ pub fn window(grid: Grid, x: Int, y: Int) -> Result(Grid, Nil) {
       Error(_) -> panic as "window should exist"
     }
   }))
+}
+
+/// return slice of a list from a: Inclusive, to b: Exclusive
+pub fn list_range(list: List(a), from: Int, to: Int) -> List(a) {
+  let #(f, _) = list.split(list, to)
+  let #(_, res) = list.split(f, from)
+
+  res
+}
+
+pub fn sized_window(
+  grid: Grid,
+  window_size: Int,
+  x: Int,
+  y: Int,
+) -> Result(Grid, Nil) {
+  case int.modulo(window_size, 2), size(grid) {
+    Ok(1), Ok(#(width, height)) if x < width && y < height -> Ok(window_size)
+    _, _ -> Error(Nil)
+  }
+  |> result.map(fn(_) { grid })
+  |> result.map(fn(grid) {
+    let length = float.truncate({ int.to_float(window_size) /. 2.0 })
+    io.debug(length)
+    #(length, grid)
+  })
+  |> result.map(fn(args) {
+    case args {
+      #(length, grid) -> {
+        // size = 10, length = 2; 10 / 2 = 5 2 / 10 = 0.2 -> 1
+        // size = 6, length = 10; 10 / 6 = 1.666 -> 2
+        // size = 6, length = 25; 25 / 6 = 4.16 -> 5
+
+        let expansion_grid_size = case size(grid), length {
+          Ok(#(width, height)), length ->
+            float.truncate(
+              int.to_float(length)
+              /. int.to_float(int.min(width, height))
+              +. 1.0,
+            )
+          _, _ ->
+            panic as "size should have run already, why is it failing now?"
+        }
+
+        let expansion_grid: Grid =
+          list.range(0, expansion_grid_size)
+          |> list.map(fn(_) { grid })
+          |> list.concat
+          |> list.map(fn(row) {
+            list.range(0, expansion_grid_size)
+            |> list.map(fn(_) { row })
+            |> list.concat
+          })
+
+        io.debug(#("expansion_grid_size", expansion_grid_size))
+        io.debug(#("expansion grid", expansion_grid))
+        io.debug(#("expansion grid measured size", size(expansion_grid)))
+
+        let grid_with_expansion_for_window =
+          list.concat([
+            list_range(
+              expansion_grid,
+              list.length(grid) - length,
+              list.length(grid),
+            ),
+            grid,
+            list_range(expansion_grid, 0, length),
+          ])
+          |> list.map(fn(row) {
+            list.concat([
+              list_range(row, list.length(row) - length, list.length(row)),
+              row,
+              list_range(row, 0, length),
+            ])
+          })
+
+        io.debug(#("grid_size_in_prev", size(grid_with_expansion_for_window)))
+        io.debug(#(
+          "grid with expansion for window",
+          grid_with_expansion_for_window,
+        ))
+        #(length, grid_with_expansion_for_window)
+      }
+    }
+  })
+  |> result.map(fn(args) {
+    let #(scan_length, exp) = args
+    io.debug(#("scan length", scan_length))
+    io.debug("got to horizontal window")
+    io.debug(#("X", x))
+    io.debug(#("grid size", size(exp)))
+    io.debug(#("length", list.length(list.window(exp, window_size))))
+    case args {
+      #(length, expanded_grid) ->
+        case list.at(list.window(expanded_grid, window_size), x) {
+          Ok(val) -> Ok(#(length, val))
+          _ -> Error(Nil)
+        }
+    }
+  })
+  |> result.flatten
+  |> result.map(fn(args) {
+    io.debug("got to last part")
+    case args {
+      #(_length, x_window) ->
+        list.map(x_window, fn(col) { list.at(list.window(col, window_size), y) })
+        |> result.values
+    }
+  })
+  // list.range(grid, 0, length - 1),
 }
 
 pub fn export_grid(grid: Grid) -> List(#(Float, Float)) {

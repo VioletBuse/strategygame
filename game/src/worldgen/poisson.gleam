@@ -9,7 +9,7 @@ type Grid =
 
 pub fn poisson(width: Int, height: Int) -> Result(List(#(Float, Float)), Nil) {
   empty_grid.generate_empty_grid(width, height)
-  |> grid_utils.iterate(loop_generation(50))
+  |> grid_utils.iterate(loop_generation(25))
   |> result.map(grid_utils.export_grid)
 }
 
@@ -66,10 +66,11 @@ fn loop_generation(iters: Int) -> fn(Grid, Int, Int) -> Grid {
 fn loop_generation_internal(grid: Grid, x: Int, y: Int, iters: Int) -> Grid {
   case iters {
     0 -> grid
-    _ ->
+    _ -> {
       case try_generate_point(grid, x, y) {
         Ok(new_grid) -> new_grid
         Error(_) -> loop_generation_internal(grid, x, y, iters - 1)
       }
+    }
   }
 }
