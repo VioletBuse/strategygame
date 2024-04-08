@@ -391,3 +391,40 @@ fn export_grid_loop(
       ])
   }
 }
+
+pub fn normalize_exported_grid(
+  exported: List(#(Float, Float)),
+) -> List(#(Float, Float)) {
+  case exported {
+    [] -> []
+    _ -> {
+      let sorted_x =
+        exported
+        |> list.map(fn(v) { v.0 })
+        |> list.sort(float.compare)
+      let sorted_y =
+        exported
+        |> list.map(fn(v) { v.1 })
+        |> list.sort(float.compare)
+
+      let max_x = list.at(sorted_x, list.length(sorted_x) - 1)
+
+      let max_y = list.at(sorted_y, list.length(sorted_y) - 1)
+
+      case max_x, max_y {
+        Ok(max_x), Ok(max_y) -> {
+          let factor =
+            1.0 /. int.to_float(float.truncate(float.max(max_x, max_y)) + 1)
+
+          let mapped =
+            list.map(exported, fn(point) {
+              #(point.0 *. factor, point.1 *. factor)
+            })
+
+          mapped
+        }
+        _, _ -> []
+      }
+    }
+  }
+}
