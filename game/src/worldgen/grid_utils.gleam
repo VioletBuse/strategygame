@@ -308,18 +308,18 @@ pub fn sized_window(
             |> list.concat
           })
 
-        io.debug(#("expansion_grid_size", expansion_grid_size))
-        io.debug(#("expansion grid", expansion_grid))
-        io.debug(#("expansion grid measured size", size(expansion_grid)))
+        // io.debug(#("expansion_grid_size", expansion_grid_size))
+        // io.debug(#("expansion grid", expansion_grid))
+        // io.debug(#("expansion grid measured size", size(expansion_grid)))
 
         let grid_with_expansion_for_window =
           list.concat([
             list_range(
               expansion_grid,
-              list.length(grid) - length,
-              list.length(grid),
+              list.length(expansion_grid) - length,
+              list.length(expansion_grid),
             ),
-            grid,
+            expansion_grid,
             list_range(expansion_grid, 0, length),
           ])
           |> list.map(fn(row) {
@@ -330,22 +330,28 @@ pub fn sized_window(
             ])
           })
 
-        io.debug(#("grid_size_in_prev", size(grid_with_expansion_for_window)))
-        io.debug(#(
-          "grid with expansion for window",
-          grid_with_expansion_for_window,
-        ))
+        // list_range(row, 0, length),
+        // io.debug(#("grid_size_in_prev", size(grid_with_expansion_for_window)))
+        // io.debug(#(
+        //   "manual grid sizing",
+        //   list.length(grid_with_expansion_for_window),
+        //   list.map(grid_with_expansion_for_window, list.length),
+        // ))
+        // io.debug(#(
+        //   "grid with expansion for window",
+        //   grid_with_expansion_for_window,
+        // ))
         #(length, grid_with_expansion_for_window)
       }
     }
   })
   |> result.map(fn(args) {
     let #(scan_length, exp) = args
-    io.debug(#("scan length", scan_length))
-    io.debug("got to horizontal window")
-    io.debug(#("X", x))
-    io.debug(#("grid size", size(exp)))
-    io.debug(#("length", list.length(list.window(exp, window_size))))
+    // io.debug(#("scan length", scan_length))
+    // io.debug("got to horizontal window")
+    // io.debug(#("X", x))
+    // io.debug(#("grid size", size(exp)))
+    // io.debug(#("length", list.length(list.window(exp, window_size))))
     case args {
       #(length, expanded_grid) ->
         case list.at(list.window(expanded_grid, window_size), x) {
@@ -356,7 +362,7 @@ pub fn sized_window(
   })
   |> result.flatten
   |> result.map(fn(args) {
-    io.debug("got to last part")
+    // io.debug("got to last part")
     case args {
       #(_length, x_window) ->
         list.map(x_window, fn(col) { list.at(list.window(col, window_size), y) })
