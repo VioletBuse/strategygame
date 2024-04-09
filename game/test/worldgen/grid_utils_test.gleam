@@ -401,3 +401,14 @@ pub fn export_grid_with_two_points_test() {
   ])
   |> should.equal([#(0.5, 1.5), #(2.5, 2.5)])
 }
+
+pub fn grid_normalize_test() {
+  [#(0.0, 0.0), #(5.0, 2.0), #(9.8, 2.5), #(9.0, 0.0)]
+  |> grid_utils.normalize_exported_grid
+  |> should.equal([
+    #(0.0, 0.0),
+    #(0.5, 0.2),
+    #(0.9800000000000001, 0.25),
+    #(0.9, 0.0),
+  ])
+}

@@ -1,6 +1,6 @@
 import gleam/io
 import gleam/result
-import gleam/list
+// import gleam/list
 import worldgen/poisson.{poisson}
 
 pub fn main() {

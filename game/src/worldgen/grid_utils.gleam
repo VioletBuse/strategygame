@@ -166,6 +166,20 @@ fn iterate_loop(
   }
 }
 
+pub fn point_distance(
+  from: #(Float, Float),
+  to: #(Float, Float),
+) -> Result(Float, Nil) {
+  case float.power(from.1 -. to.1, 2.0), float.power(from.0 -. to.0, 2.0) {
+    Ok(y), Ok(x) ->
+      case float.square_root(y +. x) {
+        Ok(dist) -> Ok(dist)
+        _ -> Error(Nil)
+      }
+    _, _ -> Error(Nil)
+  }
+}
+
 pub fn distance(
   grid: Grid,
   from: #(Int, Int),
@@ -195,21 +209,7 @@ pub fn distance(
       }
 
       transformed
-      |> result.map(fn(points) {
-        let #(#(x1, y1), #(x2, y2)) = points
-
-        case float.power(x2 -. x1, 2.0), float.power(y2 -. y1, 2.0) {
-          Ok(term1), Ok(term2) -> Ok(term1 +. term2)
-          _, _ -> Error(Nil)
-        }
-      })
-      |> result.flatten
-      |> result.map(fn(distance2) {
-        case float.square_root(distance2) {
-          Ok(dist) -> Ok(dist)
-          _ -> Error(Nil)
-        }
-      })
+      |> result.map(fn(v) { point_distance(v.0, v.1) })
       |> result.flatten
     }
   }
@@ -331,7 +331,6 @@ pub fn sized_window(
     }
   })
   |> result.map(fn(args) {
-    let #(scan_length, exp) = args
     case args {
       #(length, expanded_grid) ->
         case list.at(list.window(expanded_grid, window_size), x) {
@@ -395,16 +394,42 @@ fn export_grid_loop(
 pub fn normalize_exported_grid(
   exported: List(#(Float, Float)),
 ) -> List(#(Float, Float)) {
+  exported
+  |> list.map(fn(v) { #(0, v.0, v.1) })
+  |> normalize_exported_grid_with_ids
+  |> list.map(fn(v) { #(v.1, v.2) })
+}
+
+pub fn normalize_exported_grid_with_ids(
+  exported: List(#(a, Float, Float)),
+) -> List(#(a, Float, Float)) {
+  scale_exported_grid_to_size_with_ids(exported, 1)
+}
+
+pub fn scale_exported_grid_to_size(
+  exported: List(#(Float, Float)),
+  size: Int,
+) -> List(#(Float, Float)) {
+  exported
+  |> list.map(fn(v) { #(0, v.0, v.1) })
+  |> scale_exported_grid_to_size_with_ids(size)
+  |> list.map(fn(v) { #(v.1, v.2) })
+}
+
+pub fn scale_exported_grid_to_size_with_ids(
+  exported: List(#(a, Float, Float)),
+  size: Int,
+) -> List(#(a, Float, Float)) {
   case exported {
     [] -> []
     _ -> {
       let sorted_x =
         exported
-        |> list.map(fn(v) { v.0 })
+        |> list.map(fn(v) { v.1 })
         |> list.sort(float.compare)
       let sorted_y =
         exported
-        |> list.map(fn(v) { v.1 })
+        |> list.map(fn(v) { v.2 })
         |> list.sort(float.compare)
 
       let max_x = list.at(sorted_x, list.length(sorted_x) - 1)
@@ -414,11 +439,12 @@ pub fn normalize_exported_grid(
       case max_x, max_y {
         Ok(max_x), Ok(max_y) -> {
           let factor =
-            1.0 /. int.to_float(float.truncate(float.max(max_x, max_y)) + 1)
+            int.to_float(size)
+            /. int.to_float(float.truncate(float.max(max_x, max_y)) + 1)
 
           let mapped =
             list.map(exported, fn(point) {
-              #(point.0 *. factor, point.1 *. factor)
+              #(point.0, point.1 *. factor, point.2 *. factor)
             })
 
           mapped
