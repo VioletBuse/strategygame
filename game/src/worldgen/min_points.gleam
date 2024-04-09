@@ -5,10 +5,11 @@ import gleam/float
 import worldgen/grid_utils
 import worldgen/poisson.{poisson}
 
-pub fn generate_minimum_outposts_normalized(
-  player_count: Int,
+pub fn generate(
+  outpost_count: Int,
+  discard_extra discard_extra: Bool,
 ) -> Result(List(#(Float, Float)), Nil) {
-  generate_outer_loop(player_count, 0, 20)
+  generate_outer_loop(outpost_count, 0, 20, discard_extra)
   |> result.map(grid_utils.normalize_exported_grid)
 }
 
@@ -16,6 +17,7 @@ fn generate_outer_loop(
   player_count: Int,
   current_iter: Int,
   max_iters: Int,
+  discard_extra: Bool,
 ) -> Result(List(#(Float, Float)), Nil) {
   let size =
     player_count * 4
@@ -26,10 +28,16 @@ fn generate_outer_loop(
 
   case size {
     Ok(size) ->
-      case generate_loop(player_count, size, 5) {
+      case generate_loop(player_count, size, 5, discard_extra) {
         Ok(points) -> Ok(points)
         _ if current_iter > max_iters -> Error(Nil)
-        _ -> generate_outer_loop(player_count, current_iter + 1, max_iters)
+        _ ->
+          generate_outer_loop(
+            player_count,
+            current_iter + 1,
+            max_iters,
+            discard_extra,
+          )
       }
     _ -> Error(Nil)
   }
@@ -39,8 +47,9 @@ fn generate_loop(
   required_amount: Int,
   size: Int,
   iters: Int,
+  discard_extra: Bool,
 ) -> Result(List(#(Float, Float)), Nil) {
-  let result = {
+  let result_unbounded = {
     poisson(size, size)
     |> result.map(fn(list) {
       case list.length(list) {
@@ -49,7 +58,15 @@ fn generate_loop(
       }
     })
     |> result.flatten
-    |> result.map(list.take(_, required_amount))
+  }
+
+  let result = case discard_extra {
+    True -> {
+      result_unbounded
+      |> result.map(list.shuffle)
+      |> result.map(list.take(_, required_amount))
+    }
+    _ -> result_unbounded
   }
 
   case result {
@@ -57,7 +74,7 @@ fn generate_loop(
     _ ->
       case iters {
         0 -> Error(Nil)
-        _ -> generate_loop(required_amount, size, iters - 1)
+        _ -> generate_loop(required_amount, size, iters - 1, discard_extra)
       }
   }
 }
