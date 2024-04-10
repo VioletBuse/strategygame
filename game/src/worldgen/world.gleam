@@ -2,13 +2,14 @@ import gleam/list
 import gleam/dict
 import gleam/order
 import gleam/float
+import gleam/int
 import gleam/result
 import worldgen/min_points
 import worldgen/grid_utils
 
 pub type WorldgenOutpostData {
-  OwnedOutpost(player_id: Int)
-  UnownedOutpost
+  OwnedOutpost(id: Int, player_id: Int)
+  UnownedOutpost(id: Int)
 }
 
 type AdjacencyMatrix =
@@ -56,9 +57,13 @@ pub fn generate_world(
       assigned
       |> list.map(fn(assignment) {
         case assignment {
-          #(-1, point) -> #(UnownedOutpost, point.0, point.1)
+          #(-1, point) -> #(
+            UnownedOutpost(id: int.random(1_000_000_000)),
+            point.0,
+            point.1,
+          )
           #(player_id, point) -> #(
-            OwnedOutpost(player_id: player_id),
+            OwnedOutpost(id: int.random(1_000_000_000), player_id: player_id),
             point.0,
             point.1,
           )
