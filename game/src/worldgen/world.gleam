@@ -1,5 +1,8 @@
 import gleam/list
 import gleam/dict
+import gleam/order
+import gleam/float
+import gleam/result
 import worldgen/min_points
 import worldgen/grid_utils
 
@@ -7,6 +10,9 @@ pub type WorldgenOutpostData {
   OwnedOutpost(player_id: Int)
   UnownedOutpost
 }
+
+type AdjacencyMatrix =
+  List(#(dict.Dict(Int, Float), #(Float, Float)))
 
 pub fn generate_world(
   players: Int,
@@ -21,8 +27,31 @@ pub fn generate_world(
       let user_int_ids = list.range(1, players)
       let assigned_spawn_points = list.zip(user_int_ids, player_spawn_points)
 
+      let adjacency_matrix: AdjacencyMatrix = {
+        world_points
+        |> list.map(fn(world_point) {
+          let distances = {
+            assigned_spawn_points
+            |> list.map(fn(s) {
+              let #(player_id, spawn_point) = s
+              #(player_id, grid_utils.point_distance(world_point, spawn_point))
+            })
+            |> list.filter(fn(a) { result.is_ok(a.1) })
+            |> list.map(fn(v) {
+              case v {
+                #(id, Ok(dist)) -> #(id, dist)
+                _ -> panic as "distance should not be errored"
+              }
+            })
+            |> dict.from_list
+          }
+
+          #(distances, world_point)
+        })
+      }
+
       let assigned =
-        assign_outpost_loop(assigned_spawn_points, world_points, per_player)
+        assign_outpost_loop(assigned_spawn_points, adjacency_matrix, starting)
 
       assigned
       |> list.map(fn(assignment) {
@@ -43,10 +72,10 @@ pub fn generate_world(
 
 fn assign_outpost_loop(
   spawn_points: List(#(Int, #(Float, Float))),
-  outposts: List(#(Float, Float)),
+  outposts: AdjacencyMatrix,
   starting_outpost_count: Int,
 ) -> List(#(Int, #(Float, Float))) {
-  list.range(0, starting_outpost_count * list.length(spawn_points))
+  list.range(1, starting_outpost_count)
   |> list.map(fn(_) { spawn_points })
   |> list.concat
   |> list.shuffle
@@ -55,17 +84,40 @@ fn assign_outpost_loop(
 
 fn assign_outposts_inner_loop(
   spawn_points_assignment_list: List(#(Int, #(Float, Float))),
-  outposts: List(#(Float, Float)),
+  outposts: AdjacencyMatrix,
 ) -> List(#(Int, #(Float, Float))) {
   case spawn_points_assignment_list {
-    [] ->
+    [] -> {
       outposts
       |> list.map(fn(pst) {
-        let #(x, y) = pst
-        #(-1, x, y)
+        let #(_, #(x, y)) = pst
+        #(-1, #(x, y))
       })
-    [current_spawn_point, ..rest] -> {
-      let closest_points = list.sort(outposts, fn(first, second) { todo })
+    }
+    [current_spawn_point, ..rest_spawns] -> {
+      let closest_points =
+        list.sort(outposts, fn(first, second) {
+          let first_dist = dict.get(first.0, current_spawn_point.0)
+          let second_dist = dict.get(second.0, current_spawn_point.0)
+
+          case first_dist, second_dist {
+            Ok(first), Ok(second) -> float.compare(first, second)
+            Ok(_), _ -> order.Gt
+            _, Ok(_) -> order.Lt
+            _, _ -> order.Eq
+          }
+        })
+
+      case closest_points {
+        [] -> []
+        [first, ..rest_world_points] -> {
+          let #(_, #(x, y)) = first
+          [
+            #(current_spawn_point.0, #(x, y)),
+            ..assign_outposts_inner_loop(rest_spawns, rest_world_points)
+          ]
+        }
+      }
     }
   }
 }
