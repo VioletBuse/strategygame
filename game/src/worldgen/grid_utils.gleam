@@ -38,6 +38,33 @@ pub fn size_loop(grid: Grid, acc: Int) -> Result(Int, Nil) {
   }
 }
 
+pub fn size_exported(entries: List(Entry)) -> #(Int, Int) {
+  case entries {
+    [] -> #(0, 0)
+    [first, ..rest] -> {
+      let max =
+        list.fold(rest, first, fn(acc, entry) {
+          case acc, entry {
+            #(acc_x, acc_y), #(entry_x, entry_y)
+              if entry_x >. acc_x && entry_y >. acc_y
+            -> #(entry_x, entry_y)
+            #(acc_x, acc_y), #(entry_x, _) if entry_x >. acc_x -> #(
+              entry_x,
+              acc_y,
+            )
+            #(acc_x, acc_y), #(_, entry_y) if entry_y >. acc_y -> #(
+              acc_x,
+              entry_y,
+            )
+            acc, _ -> acc
+          }
+        })
+
+      #(float.truncate(max.0) + 1, float.truncate(max.1) + 1)
+    }
+  }
+}
+
 pub fn clamped_point(
   size: Result(#(Int, Int), Nil),
   x: Int,
@@ -166,7 +193,7 @@ fn iterate_loop(
   }
 }
 
-pub fn point_distance(
+pub fn base_point_distance(
   from: #(Float, Float),
   to: #(Float, Float),
 ) -> Result(Float, Nil) {
@@ -180,6 +207,34 @@ pub fn point_distance(
   }
 }
 
+pub fn point_distance(
+  size: #(Int, Int),
+  from: #(Float, Float),
+  to: #(Float, Float),
+) -> Result(Float, Nil) {
+  [
+    [#(-1, 1), #(0, 1), #(1, 1)],
+    [#(-1, 0), #(0, 0), #(1, 0)],
+    [#(-1, -1), #(0, -1), #(1, -1)],
+  ]
+  |> list.concat
+  |> list.map(fn(transform) {
+    let new_x = int.to_float(transform.0 * size.0) +. to.0
+    let new_y = int.to_float(transform.1 * size.1) +. to.1
+
+    #(new_x, new_y)
+  })
+  |> list.map(base_point_distance(from, _))
+  |> list.fold(Error(Nil), fn(acc, dist) {
+    case acc, dist {
+      Error(_), Error(_) -> Error(Nil)
+      Error(_), Ok(dist) -> Ok(dist)
+      Ok(acc), Ok(dist) if dist <. acc -> Ok(dist)
+      Ok(acc), _ -> Ok(acc)
+    }
+  })
+}
+
 pub fn distance(
   grid: Grid,
   from: #(Int, Int),
@@ -190,28 +245,28 @@ pub fn distance(
 
   let point_from = at_point(grid, Ok(from))
   let point_to = at_point(grid, Ok(to))
+  let size = size(grid)
 
-  case point_from, point_to {
-    Ok(#(x1, y1)), Ok(#(x2, y2))
+  case point_from, point_to, size {
+    Ok(#(x1, y1)), Ok(#(x2, y2)), Ok(_)
       if x1 <. 0.0 || x2 <. 0.0 || y1 <. 0.0 || y2 <. 0.0
     -> Error(Nil)
 
-    _, _ -> {
-      let transformed = case point_from, point_to {
-        Ok(#(x1, y1)), Ok(#(x2, y2)) ->
-          Ok(
-            #(#(x1 +. int.to_float(x_from), y1 +. int.to_float(y_from)), #(
-              x2 +. int.to_float(x_to),
-              y2 +. int.to_float(y_to),
-            )),
-          )
-        _, _ -> Error(Nil)
-      }
+    Ok(#(x1, y1)), Ok(#(x2, y2)), Ok(size) -> {
+      let transformed =
+        Ok(
+          #(#(x1 +. int.to_float(x_from), y1 +. int.to_float(y_from)), #(
+            x2 +. int.to_float(x_to),
+            y2 +. int.to_float(y_to),
+          )),
+        )
 
       transformed
-      |> result.map(fn(v) { point_distance(v.0, v.1) })
+      |> result.map(fn(v) { point_distance(size, v.0, v.1) })
       |> result.flatten
     }
+
+    _, _, _ -> Error(Nil)
   }
 }
 

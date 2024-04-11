@@ -17,9 +17,14 @@ type AdjacencyMatrix =
 
 pub fn generate_world(
   players: Int,
-  per_player per_player: Int,
-  starting starting: Int,
+  starting_gen starting_gen: Int,
+  starting_fac starting_fac: Int,
+  remaining remaining: Int,
+  gen_fac_ratio gen_fac_ratio: Float,
 ) -> Result(List(#(WorldgenOutpostData, Float, Float)), Nil) {
+  let starting = starting_gen + starting_fac
+  let per_player = starting + remaining
+
   let world_points = min_points.generate(players * per_player, False)
   let spawn_points = min_points.generate(players, True)
 
@@ -35,7 +40,10 @@ pub fn generate_world(
             assigned_spawn_points
             |> list.map(fn(s) {
               let #(player_id, spawn_point) = s
-              #(player_id, grid_utils.point_distance(world_point, spawn_point))
+              #(
+                player_id,
+                grid_utils.point_distance(#(1, 1), world_point, spawn_point),
+              )
             })
             |> list.filter(fn(a) { result.is_ok(a.1) })
             |> list.map(fn(v) {

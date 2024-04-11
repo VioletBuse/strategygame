@@ -6,7 +6,7 @@ import gleam/dict
 import worldgen/world
 
 pub fn main() {
-  world.generate_world(8, 11, 5)
+  world.generate_world(8, 2, 3, 6, 0.5)
   // |> result.map(list.length)
   |> result.map(list.group(_, fn(v) {
     case v {
