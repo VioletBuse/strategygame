@@ -10,8 +10,8 @@ pub fn main() {
   // |> result.map(list.length)
   |> result.map(list.group(_, fn(v) {
     case v {
-      #(world.OwnedOutpost(_, id), _, _) -> id
-      #(world.UnownedOutpost(_), _, _) -> -1
+      #(world.OwnedOutpost(_, _, id, _), _, _) -> id
+      #(world.UnownedOutpost(_, _), _, _) -> -1
     }
   }))
   |> result.map(dict.to_list)
