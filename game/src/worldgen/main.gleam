@@ -71,9 +71,13 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
         world.GeneratedGenerator -> Generator
       }
 
-      let outpost_ownership = case player_id {
-        -1 -> Unowned
-        pid -> PlayerOwned(pid)
+      let outpost_ownership_result = case player_id {
+        -1 -> Ok(Unowned)
+        p_idx ->
+          case list.at(players, p_idx - 1) {
+            Ok(Player(pid)) -> Ok(PlayerOwned(pid))
+            Error(_) -> Error(Nil)
+          }
       }
 
       let stationed_units = case player_id {
@@ -81,7 +85,9 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
         _ -> starting_stationed_units
       }
 
-      #(
+      use outpost_ownership <- result.try(outpost_ownership_result)
+
+      Ok(#(
         Outpost(
           outpost_id,
           outpost_type,
@@ -90,10 +96,13 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
           stationed_units,
         ),
         queen_spawn,
-      )
+      ))
     }
 
-    Ok(mapped)
+    Ok(
+      mapped
+      |> result.values,
+    )
   }
 
   use generated <- result.try(outposts)
