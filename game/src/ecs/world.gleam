@@ -1,4 +1,3 @@
-import prng/seed.{type Seed}
 import ecs/entities/players.{type Player}
 import ecs/entities/outposts.{type Outpost}
 import ecs/entities/ships.{type Ship}

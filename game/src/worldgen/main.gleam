@@ -106,7 +106,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
         let generated_with_queen = {
           use outpost <- list.filter(generated_outposts)
           case outpost {
-            #(world.OwnedOutpost(id, _, _, True), _, _) -> True
+            #(world.OwnedOutpost(_, _, _, True), _, _) -> True
             _ -> False
           }
         }
