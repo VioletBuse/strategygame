@@ -4,6 +4,7 @@ pub type Outpost {
     outpost_type: OutpostType,
     location: OutpostLocation,
     ownership: OutpostOwnership,
+    stationed_units: Int,
   )
 }
 
@@ -29,11 +30,13 @@ pub fn new(
   outpost_type outpost_type: OutpostType,
   location location: OutpostLocation,
   ownership ownership: OutpostOwnership,
+  stationed_units stationed_units: Int,
 ) -> Outpost {
   Outpost(
     id: id,
     outpost_type: outpost_type,
     location: location,
     ownership: ownership,
+    stationed_units: stationed_units,
   )
 }

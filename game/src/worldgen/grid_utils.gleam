@@ -42,23 +42,23 @@ pub fn size_exported(entries: List(Entry)) -> #(Int, Int) {
   case entries {
     [] -> #(0, 0)
     [first, ..rest] -> {
-      let max =
-        list.fold(rest, first, fn(acc, entry) {
-          case acc, entry {
-            #(acc_x, acc_y), #(entry_x, entry_y)
-              if entry_x >. acc_x && entry_y >. acc_y
-            -> #(entry_x, entry_y)
-            #(acc_x, acc_y), #(entry_x, _) if entry_x >. acc_x -> #(
-              entry_x,
-              acc_y,
-            )
-            #(acc_x, acc_y), #(_, entry_y) if entry_y >. acc_y -> #(
-              acc_x,
-              entry_y,
-            )
-            acc, _ -> acc
-          }
-        })
+      let max = {
+        use acc, entry <- list.fold(rest, first)
+        case acc, entry {
+          #(acc_x, acc_y), #(entry_x, entry_y)
+            if entry_x >. acc_x && entry_y >. acc_y
+          -> #(entry_x, entry_y)
+          #(acc_x, acc_y), #(entry_x, _) if entry_x >. acc_x -> #(
+            entry_x,
+            acc_y,
+          )
+          #(acc_x, acc_y), #(_, entry_y) if entry_y >. acc_y -> #(
+            acc_x,
+            entry_y,
+          )
+          acc, _ -> acc
+        }
+      }
 
       #(float.truncate(max.0) + 1, float.truncate(max.1) + 1)
     }
