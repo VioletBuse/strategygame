@@ -21,19 +21,3 @@ pub type ShipOwner {
   Player(id: Int)
   Unowned
 }
-
-pub fn new_ship(
-  id: Int,
-  location location: ShipLocation,
-  target target: ShipTarget,
-  ownership ownership: ShipOwner,
-  onboard_units onboard_units: Int,
-) -> Ship {
-  Ship(
-    id: id,
-    location: location,
-    target: target,
-    ownership: ownership,
-    onboard_units: onboard_units,
-  )
-}

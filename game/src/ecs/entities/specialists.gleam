@@ -19,17 +19,3 @@ pub type SpecialistLocation {
 pub type SpecialistOwnership {
   Player(id: Int)
 }
-
-pub fn new_specialist(
-  id: Int,
-  specialist_type specialist_type: SpecificSpecialist,
-  location location: SpecialistLocation,
-  ownership ownership: SpecialistOwnership,
-) -> Specialist {
-  Specialist(
-    id: id,
-    specialist_type: specialist_type,
-    location: location,
-    ownership: ownership,
-  )
-}

@@ -24,19 +24,3 @@ pub type OutpostOwnership {
   Player(id: Int)
   Unowned
 }
-
-pub fn new(
-  id: Int,
-  outpost_type outpost_type: OutpostType,
-  location location: OutpostLocation,
-  ownership ownership: OutpostOwnership,
-  stationed_units stationed_units: Int,
-) -> Outpost {
-  Outpost(
-    id: id,
-    outpost_type: outpost_type,
-    location: location,
-    ownership: ownership,
-    stationed_units: stationed_units,
-  )
-}
