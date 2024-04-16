@@ -62,7 +62,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
       }
 
       let outpost_type = case generated_outpost_type {
-        world.GeneratedFactory -> outposts.Factory
+        world.GeneratedFactory -> outposts.Factory(production_offset: 0)
         world.GeneratedGenerator -> outposts.Generator
       }
 

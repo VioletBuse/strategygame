@@ -9,7 +9,7 @@ pub type Outpost {
 }
 
 pub type OutpostType {
-  Factory
+  Factory(production_offset: Int)
   Generator
   Wreck
   Mine
