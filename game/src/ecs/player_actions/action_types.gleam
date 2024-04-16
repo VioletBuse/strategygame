@@ -5,7 +5,7 @@ pub type PlayerAction {
     by: Int,
     from: Int,
     to: ShipTarget,
-    stationed_units: Int,
+    units: Int,
     specialists: List(Int),
   )
 }

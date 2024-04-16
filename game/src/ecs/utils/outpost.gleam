@@ -45,3 +45,15 @@ pub fn get_specialists(
     }
   })
 }
+
+pub fn update_outpost(world: World, updated_outpost: outposts.Outpost) -> World {
+  let updated_outposts =
+    list.map(world.outposts, fn(outpost) {
+      case outpost {
+        curr_outpost if curr_outpost.id == updated_outpost.id -> updated_outpost
+        curr_outpost -> curr_outpost
+      }
+    })
+
+  world.World(..world, outposts: updated_outposts)
+}
