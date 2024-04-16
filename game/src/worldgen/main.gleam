@@ -118,6 +118,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
     })
 
   Ok(ecs_world.World(
+    size: world_size,
     outposts: outposts,
     ships: ships,
     players: players,
