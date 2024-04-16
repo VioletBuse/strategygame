@@ -19,7 +19,7 @@ pub fn valid(world: World, action: PlayerAction) -> Bool {
     list.any(world.outposts, fn(outpost) {
       let is_same_outpost = outpost.id == from
       let is_owned_by_player = case outpost.ownership {
-        outposts.Player(pid) -> pid == by_player
+        outposts.PlayerOwned(pid) -> pid == by_player
         _ -> False
       }
       let has_enough_units = outpost.stationed_units >= stationed_units

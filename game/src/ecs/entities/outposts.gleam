@@ -21,6 +21,6 @@ pub type OutpostLocation {
 }
 
 pub type OutpostOwnership {
-  Player(id: Int)
+  PlayerOwned(id: Int)
   Unowned
 }

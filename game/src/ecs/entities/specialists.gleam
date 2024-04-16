@@ -17,5 +17,5 @@ pub type SpecialistLocation {
 }
 
 pub type SpecialistOwnership {
-  Player(id: Int)
+  PlayerOwned(id: Int)
 }

@@ -1,4 +1,5 @@
 import ecs/world.{type World}
+import ecs/world_utils
 import ecs/systems/handlers/unit_production
 
 type SystemHandler =
@@ -18,7 +19,11 @@ fn apply_systems_loop(
     [] -> Ok(world)
     [next_handler, ..rest_handlers] ->
       case next_handler(world) {
-        Ok(new_world) -> apply_systems_loop(new_world, rest_handlers)
+        Ok(new_world) ->
+          case world_utils.validate(new_world) {
+            True -> apply_systems_loop(new_world, rest_handlers)
+            False -> Error(Nil)
+          }
         _ -> Error(Nil)
       }
   }

@@ -1,14 +1,9 @@
 import gleam/int
 import gleam/list
 import gleam/result
-import ecs/entities/outposts.{
-  Factory, Generator, Outpost, OutpostLocation, Player as PlayerOwned, Unowned,
-}
-import ecs/entities/players.{Player}
-import ecs/entities/specialists.{
-  OutpostLocation as SpecialistOutpostLocation, Player as PlayerOwnedSpecialist,
-  Queen, Specialist,
-}
+import ecs/entities/outposts
+import ecs/entities/players
+import ecs/entities/specialists
 import ecs/world as ecs_world
 import worldgen/world
 import worldgen/grid_utils
@@ -30,7 +25,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
     Standard(player_ids) -> #(player_ids, 300, 2, 3, 6, 0.4, 20)
   }
 
-  let players = list.map(player_ids, fn(id) { Player(id) })
+  let players = list.map(player_ids, fn(id) { players.Player(id) })
   let ships = []
 
   let outposts = {
@@ -67,15 +62,15 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
       }
 
       let outpost_type = case generated_outpost_type {
-        world.GeneratedFactory -> Factory
-        world.GeneratedGenerator -> Generator
+        world.GeneratedFactory -> outposts.Factory
+        world.GeneratedGenerator -> outposts.Generator
       }
 
       let outpost_ownership_result = case player_id {
-        -1 -> Ok(Unowned)
+        -1 -> Ok(outposts.Unowned)
         p_idx ->
           case list.at(players, p_idx - 1) {
-            Ok(Player(pid)) -> Ok(PlayerOwned(pid))
+            Ok(players.Player(pid)) -> Ok(outposts.PlayerOwned(pid))
             Error(_) -> Error(Nil)
           }
       }
@@ -88,10 +83,10 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
       use outpost_ownership <- result.try(outpost_ownership_result)
 
       Ok(#(
-        Outpost(
+        outposts.Outpost(
           outpost_id,
           outpost_type,
-          OutpostLocation(x, y),
+          outposts.OutpostLocation(x, y),
           outpost_ownership,
           stationed_units,
         ),
@@ -112,12 +107,13 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
   let specialists =
     list.filter(generated, fn(v) { v.1 })
     |> list.map(fn(v) {
-      let assert #(Outpost(oid, _, _, PlayerOwned(pid), _), _) = v
-      Specialist(
+      let assert #(outposts.Outpost(oid, _, _, outposts.PlayerOwned(pid), _), _) =
+        v
+      specialists.Specialist(
         int.random(1_000_000_000),
-        Queen,
-        SpecialistOutpostLocation(oid),
-        PlayerOwnedSpecialist(pid),
+        specialists.Queen,
+        specialists.OutpostLocation(oid),
+        specialists.PlayerOwned(pid),
       )
     })
 

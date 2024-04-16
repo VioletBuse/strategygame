@@ -1,14 +1,9 @@
 import gleam/list
 import gleam/bool.{guard}
 import ecs/world.{type World}
-import ecs/entities/outposts.{Player as PstPlayerOwned, Unowned as PstUnowned}
-import ecs/entities/ships.{
-  OutpostTarget as ShipOutpostTarget, Player as ShipPlayerOwned,
-  ShipTarget as ShipShipTarget, Unowned as ShipUnowned,
-}
-import ecs/entities/specialists.{
-  OutpostLocation as SpecOutpostLocation, ShipLocation as SpecShipLocation,
-}
+import ecs/entities/outposts
+import ecs/entities/ships
+import ecs/entities/specialists
 
 fn players_invalid(world: World) -> Bool {
   let more_than_zero_players = !list.is_empty(world.players)
@@ -35,8 +30,8 @@ fn outposts_invalid(world: World) -> Bool {
     world.outposts
     |> list.map(fn(outpost) {
       case outpost.ownership {
-        PstUnowned -> True
-        PstPlayerOwned(pid) -> {
+        outposts.Unowned -> True
+        outposts.PlayerOwned(pid) -> {
           case
             world.players
             |> list.find(fn(player) { player.id == pid })
@@ -72,12 +67,12 @@ fn ships_invalid(world: World) -> Bool {
     world.ships
     |> list.map(fn(ship) {
       case ship.target {
-        ShipOutpostTarget(oid) ->
+        ships.OutpostTarget(oid) ->
           case list.find(world.outposts, fn(o) { o.id == oid }) {
             Ok(_) -> True
             _ -> False
           }
-        ShipShipTarget(sid) ->
+        ships.ShipTarget(sid) ->
           case
             list.find(world.ships, fn(s) { s.id == sid && s.id != ship.id })
           {
@@ -94,8 +89,8 @@ fn ships_invalid(world: World) -> Bool {
     world.ships
     |> list.map(fn(ship) {
       case ship.ownership {
-        ShipUnowned -> True
-        ShipPlayerOwned(pid) ->
+        ships.Unowned -> True
+        ships.PlayerOwned(pid) ->
           case list.find(world.players, fn(p) { p.id == pid }) {
             Ok(_) -> True
             _ -> False
@@ -142,12 +137,12 @@ fn specialists_invalid(world: World) -> Bool {
     world.specialists
     |> list.map(fn(specialist) {
       case specialist.location {
-        SpecOutpostLocation(oid) ->
+        specialists.OutpostLocation(oid) ->
           case list.find(world.outposts, fn(o) { o.id == oid }) {
             Ok(_) -> True
             _ -> False
           }
-        SpecShipLocation(sid) ->
+        specialists.ShipLocation(sid) ->
           case list.find(world.ships, fn(s) { s.id == sid }) {
             Ok(_) -> True
             _ -> False

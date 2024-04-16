@@ -1,5 +1,6 @@
 import gleam/list
 import ecs/world.{type World, World}
+import ecs/world_utils
 import ecs/player_actions/action_types.{type PlayerAction}
 import ecs/player_actions/handlers/send_ship
 
@@ -30,7 +31,11 @@ fn player_action_loop(
       case list.find(handlers, fn(h) { h.0(current_action) }) {
         Ok(#(_, handler)) ->
           case handler(world, current_action) {
-            Ok(new_world) -> player_action_loop(new_world, remaining_actions)
+            Ok(new_world) ->
+              case world_utils.validate(new_world) {
+                True -> player_action_loop(new_world, remaining_actions)
+                False -> Error(Nil)
+              }
             _ -> Error(Nil)
           }
         _ -> Error(Nil)

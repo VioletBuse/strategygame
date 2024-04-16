@@ -18,6 +18,6 @@ pub type ShipTarget {
 }
 
 pub type ShipOwner {
-  Player(id: Int)
+  PlayerOwned(id: Int)
   Unowned
 }
