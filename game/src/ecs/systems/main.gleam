@@ -1,5 +1,7 @@
 import ecs/world.{type World}
 import ecs/world_utils
+import ecs/systems/handlers/princess_takeover
+import ecs/systems/handlers/death
 import ecs/systems/handlers/unit_maxima
 import ecs/systems/handlers/unit_production
 
@@ -7,6 +9,8 @@ type SystemHandler =
   fn(World) -> Result(World, Nil)
 
 const handlers: List(SystemHandler) = [
+  princess_takeover.handler,
+  death.handler,
   unit_maxima.handler,
   unit_production.handler,
 ]

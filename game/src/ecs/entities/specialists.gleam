@@ -9,6 +9,7 @@ pub type Specialist {
 
 pub type SpecificSpecialist {
   Queen
+  Princess
 }
 
 pub type SpecialistLocation {
