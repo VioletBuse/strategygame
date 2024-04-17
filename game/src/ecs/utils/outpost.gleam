@@ -57,3 +57,17 @@ pub fn update_outpost(world: World, updated_outpost: outposts.Outpost) -> World 
 
   world.World(..world, outposts: updated_outposts)
 }
+
+pub fn merge_list(world: World, outpost_list: List(outposts.Outpost)) -> World {
+  let updated_outposts =
+    list.map(world.outposts, fn(outpost) {
+      case
+        list.find(outpost_list, fn(new_outpost) { new_outpost.id == outpost.id })
+      {
+        Ok(new_outpost) -> new_outpost
+        _ -> outpost
+      }
+    })
+
+  world.World(..world, outposts: updated_outposts)
+}

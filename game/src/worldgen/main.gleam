@@ -21,11 +21,16 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
     unclaimed_outposts_per_person,
     gen_fac_ratio,
     starting_stationed_units,
+    base_units_per_tick,
+    base_units_per_gen,
   ) = case preset {
-    Standard(player_ids) -> #(player_ids, 300, 2, 3, 6, 0.4, 20)
+    Standard(player_ids) -> #(player_ids, 300, 2, 3, 6, 0.4, 20, 8, 25)
   }
 
-  let players = list.map(player_ids, fn(id) { players.Player(id) })
+  let players =
+    list.map(player_ids, fn(id) {
+      players.Player(id, True, starting_gen * base_units_per_gen)
+    })
   let ships = []
 
   let outposts = {
@@ -70,7 +75,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
         -1 -> Ok(outposts.Unowned)
         p_idx ->
           case list.at(players, p_idx - 1) {
-            Ok(players.Player(pid)) -> Ok(outposts.PlayerOwned(pid))
+            Ok(players.Player(pid, _, _)) -> Ok(outposts.PlayerOwned(pid))
             Error(_) -> Error(Nil)
           }
       }
@@ -119,6 +124,8 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
 
   Ok(ecs_world.World(
     size: world_size,
+    base_units_per_tick: base_units_per_tick,
+    base_units_per_gen: base_units_per_gen,
     outposts: outposts,
     ships: ships,
     players: players,

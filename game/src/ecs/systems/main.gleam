@@ -1,11 +1,15 @@
 import ecs/world.{type World}
 import ecs/world_utils
+import ecs/systems/handlers/unit_maxima
 import ecs/systems/handlers/unit_production
 
 type SystemHandler =
   fn(World) -> Result(World, Nil)
 
-const handlers: List(SystemHandler) = [unit_production.handler]
+const handlers: List(SystemHandler) = [
+  unit_maxima.handler,
+  unit_production.handler,
+]
 
 pub fn apply_systems(world: World) -> Result(World, Nil) {
   apply_systems_loop(world, handlers)

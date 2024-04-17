@@ -6,6 +6,8 @@ import ecs/entities/specialists.{type Specialist}
 pub type World {
   World(
     size: Int,
+    base_units_per_tick: Int,
+    base_units_per_gen: Int,
     players: List(Player),
     outposts: List(Outpost),
     ships: List(Ship),
