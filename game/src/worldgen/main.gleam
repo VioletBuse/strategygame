@@ -29,7 +29,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
 
   let players =
     list.map(player_ids, fn(id) {
-      players.Player(id, True, starting_gen * base_units_per_gen)
+      players.Player(id, True, starting_gen * base_units_per_gen, 0)
     })
   let ships = []
 
@@ -75,7 +75,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
         -1 -> Ok(outposts.Unowned)
         p_idx ->
           case list.at(players, p_idx - 1) {
-            Ok(players.Player(pid, _, _)) -> Ok(outposts.PlayerOwned(pid))
+            Ok(players.Player(pid, _, _, _)) -> Ok(outposts.PlayerOwned(pid))
             Error(_) -> Error(Nil)
           }
       }
@@ -123,6 +123,8 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
     })
 
   Ok(ecs_world.World(
+    server_side: True,
+    for_player: -1,
     size: world_size,
     base_units_per_tick: base_units_per_tick,
     base_units_per_gen: base_units_per_gen,

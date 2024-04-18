@@ -11,8 +11,8 @@ type SystemHandler =
 const handlers: List(SystemHandler) = [
   princess_takeover.handler,
   death.handler,
-  unit_maxima.handler,
   unit_production.handler,
+  unit_maxima.handler,
 ]
 
 pub fn apply_systems(world: World) -> Result(World, Nil) {

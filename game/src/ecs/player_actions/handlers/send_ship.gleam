@@ -79,6 +79,19 @@ pub fn valid(world: World, action: PlayerAction) -> Bool {
 
   use <- guard(!specialists_available, False)
 
+  let pirate_in_specs = case get_specs(world, specialists) {
+    Ok(spec_list) ->
+      list.any(spec_list, fn(specialist) {
+        case specialist.specialist_type {
+          specialists.Pirate -> True
+          _ -> False
+        }
+      })
+    _ -> False
+  }
+
+  use <- guard(!pirate_in_specs, False)
+
   True
 }
 

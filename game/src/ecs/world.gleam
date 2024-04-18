@@ -5,7 +5,9 @@ import ecs/entities/specialists.{type Specialist}
 
 pub type World {
   World(
+    server_side: Bool,
     size: Int,
+    for_player: Int,
     base_units_per_tick: Int,
     base_units_per_gen: Int,
     players: List(Player),

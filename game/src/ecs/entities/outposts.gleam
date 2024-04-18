@@ -13,7 +13,7 @@ pub type OutpostType {
   Generator
   Wreck
   Mine
-  Unknown
+  Unknown(unit_production: Int, unit_supply: Int)
 }
 
 pub type OutpostLocation {

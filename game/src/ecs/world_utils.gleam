@@ -147,6 +147,7 @@ fn specialists_invalid(world: World) -> Bool {
             Ok(_) -> True
             _ -> False
           }
+        _ -> True
       }
     })
     |> list.any(fn(v) { !v })

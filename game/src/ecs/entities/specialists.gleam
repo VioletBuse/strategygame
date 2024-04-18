@@ -10,11 +10,13 @@ pub type Specialist {
 pub type SpecificSpecialist {
   Queen
   Princess
+  Pirate
 }
 
 pub type SpecialistLocation {
   OutpostLocation(id: Int)
   ShipLocation(id: Int)
+  Unknown
 }
 
 pub type SpecialistOwnership {

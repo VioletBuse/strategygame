@@ -3,19 +3,21 @@ import ecs/world.{type World, World}
 import ecs/world_utils
 import ecs/player_actions/action_types.{type PlayerAction}
 import ecs/player_actions/handlers/send_ship
+import ecs/player_actions/handlers/reroute_ship
 
-type ActionHandlerValidator =
-  fn(PlayerAction) -> Bool
+// type ActionHandlerValidator =
+//   fn(PlayerAction) -> Bool
 
-type ActionStateValidator =
-  fn(World, PlayerAction) -> Bool
+// type ActionStateValidator =
+//   fn(World, PlayerAction) -> Bool
 
 type ActionHandler =
   fn(World, PlayerAction) -> Result(World, Nil)
 
-const handlers: List(
-  #(ActionHandlerValidator, ActionStateValidator, ActionHandler, Int),
-) = [#(send_ship.is_of_type, send_ship.valid, send_ship.handler, 3)]
+const handlers = [
+  #(send_ship.is_of_type, send_ship.valid, send_ship.handler, 10),
+  #(reroute_ship.is_of_type, reroute_ship.valid, reroute_ship.handler, 1),
+]
 
 pub fn apply_player_actions(
   world: World,

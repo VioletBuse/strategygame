@@ -8,4 +8,5 @@ pub type PlayerAction {
     units: Int,
     specialists: List(Int),
   )
+  RerouteShip(by: Int, ship: Int, to: ShipTarget)
 }
