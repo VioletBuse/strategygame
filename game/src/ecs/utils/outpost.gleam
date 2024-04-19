@@ -55,7 +55,14 @@ pub fn update_outpost(world: World, updated_outpost: outposts.Outpost) -> World 
       }
     })
 
-  world.World(..world, outposts: updated_outposts)
+  // world.World(..world, outposts: updated_outposts)
+
+  case world {
+    world.ServerWorld(_, _, _, _, _, _, _) as server ->
+      world.ServerWorld(..server, outposts: updated_outposts)
+    world.ClientWorld(_, _, _, _, _, _, _, _) as client ->
+      world.world.ClientWorld(..client, outposts: updated_outposts)
+  }
 }
 
 pub fn merge_list(world: World, outpost_list: List(outposts.Outpost)) -> World {

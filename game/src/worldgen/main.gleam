@@ -122,9 +122,7 @@ pub fn create(preset: WorldgenPreset) -> Result(ecs_world.World, Nil) {
       )
     })
 
-  Ok(ecs_world.World(
-    server_side: True,
-    for_player: -1,
+  Ok(ecs_world.ServerWorld(
     size: world_size,
     base_units_per_tick: base_units_per_tick,
     base_units_per_gen: base_units_per_gen,
