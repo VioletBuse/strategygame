@@ -2,7 +2,8 @@ import gleam/list
 import ecs/world.{type World}
 import ecs/entities/specialists
 import ecs/entities/players
-import ecs/utils/player
+
+// import ecs/utils/player
 
 pub fn handler(world: World) -> Result(World, Nil) {
   let new_players =

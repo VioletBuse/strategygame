@@ -38,3 +38,27 @@ pub fn list_specialists(
     specialist.ownership.id == player.id
   })
 }
+
+pub fn add_player(world: World, player: Player) -> World {
+  todo
+}
+
+pub fn update_player(world: World, player: Player) -> World {
+  todo
+}
+
+pub fn delete_player(world: World, player: Player) -> World {
+  todo
+}
+
+pub fn add_players(world: World, players: List(Player)) -> World {
+  todo
+}
+
+pub fn update_players(world: World, players: List(Player)) -> World {
+  todo
+}
+
+pub fn delete_players(world: World, players: List(Player)) -> World {
+  todo
+}

@@ -1,6 +1,6 @@
 import gleam/list
 import gleam/dict
-import worldgen/grid_utils
+// import worldgen/grid_utils
 import ecs/world.{type World}
 import ecs/entities/specialists
 

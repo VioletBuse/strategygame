@@ -4,18 +4,9 @@ import ecs/entities/ships.{type Ship}
 import ecs/entities/specialists.{type Specialist}
 
 pub type World {
-  // World(
-  //   server_side: Bool,
-  //   size: Int,
-  //   for_player: Int,
-  //   base_units_per_tick: Int,
-  //   base_units_per_gen: Int,
-  //   players: List(Player),
-  //   outposts: List(Outpost),
-  //   ships: List(Ship),
-  //   specialists: List(Specialist),
-  // )
-  ServerWorld(
+  World(
+    world_type: WorldType,
+    current_tick: Int,
     size: Int,
     players: List(Player),
     outposts: List(Outpost),
@@ -24,14 +15,9 @@ pub type World {
     base_units_per_tick: Int,
     base_units_per_gen: Int,
   )
-  ClientWorld(
-    size: Int,
-    players: List(Player),
-    outposts: List(Outpost),
-    ships: List(Ship),
-    specialists: List(Specialist),
-    base_units_per_tick: Int,
-    base_units_per_gen: Int,
-    for_player: Int,
-  )
+}
+
+pub type WorldType {
+  ServerWorld
+  ClientWorld(for_player: Int)
 }

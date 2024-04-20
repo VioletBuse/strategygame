@@ -1,6 +1,7 @@
 import gleam/list
 import gleam/bool.{guard}
-import ecs/world.{type World}
+import ecs/world.{type World, ClientWorld, ServerWorld}
+import ecs/entities/players
 import ecs/entities/outposts
 import ecs/entities/ships
 import ecs/entities/specialists
@@ -164,4 +165,27 @@ pub fn validate(world: World) -> Bool {
   use <- guard(specialists_invalid(world), False)
 
   True
+}
+
+pub fn set_tick(world: World, tick: Int) -> World {
+  todo
+}
+
+pub fn write_players(world: World, players: List(players.Player)) -> World {
+  todo
+}
+
+pub fn write_outposts(world: World, outposts: List(outposts.Outpost)) -> World {
+  todo
+}
+
+pub fn write_ships(world: World, ships: List(ships.Ship)) -> World {
+  todo
+}
+
+pub fn write_specialists(
+  world: World,
+  specs: List(specialists.Specialist),
+) -> World {
+  todo
 }
