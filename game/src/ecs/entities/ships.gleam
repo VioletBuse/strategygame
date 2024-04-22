@@ -1,4 +1,4 @@
-pub type Ship {
+pub opaque type Ship {
   Ship(
     id: Int,
     location: ShipLocation,

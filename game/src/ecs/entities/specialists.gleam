@@ -1,4 +1,4 @@
-pub type Specialist {
+pub opaque type Specialist {
   Specialist(
     id: Int,
     specialist_type: SpecificSpecialist,

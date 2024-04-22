@@ -1,4 +1,4 @@
-pub type Outpost {
+pub opaque type Outpost {
   Outpost(
     id: Int,
     outpost_type: OutpostType,
