@@ -49,7 +49,7 @@ pub fn valid(world: World, action: PlayerAction) -> Bool {
       outpost.get(world, oid)
       |> result.is_ok
     ships.ShipTarget(sid) ->
-      ship.get(world, sid)
+      ship.get_ship(world, sid)
       |> result.is_ok
   }
 
