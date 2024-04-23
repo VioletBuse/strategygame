@@ -84,7 +84,10 @@ pub fn new_generator(
   )
 }
 
-pub fn new_unknown(location: #(Float, Float), owner: Option(String)) -> Outpost {
+pub fn new_unknown_outpost(
+  location: #(Float, Float),
+  owner: Option(String),
+) -> Outpost {
   let id = idgen.new(32)
   let ownership = case owner {
     Some(id) -> OutpostPlayerOwned(id)
@@ -201,6 +204,21 @@ pub fn get_outpost_owner(world: World, outpost: Outpost) -> Result(Player, Nil) 
   }
 }
 
+pub fn set_outpost_player_owned(outpost: Outpost, player: Player) -> Outpost {
+  Outpost(..outpost, owner: OutpostPlayerOwned(player.id))
+}
+
+pub fn set_outpost_unowned(outpost: Outpost) -> Outpost {
+  Outpost(..outpost, owner: OutpostUnowned)
+}
+
+pub fn outpost_list_targeting_ships(
+  world: World,
+  outpost: Outpost,
+) -> List(Ship) {
+  list.filter(world.ships, ship_targeting_outpost(_, outpost))
+}
+
 pub opaque type Ship {
   Ship(
     id: String,
@@ -244,6 +262,70 @@ pub fn new_ship_unknown_target(heading: Float) -> ShipTarget {
   UnknownTarget(heading)
 }
 
+pub fn ship_target_outpost(ship: Ship) -> Bool {
+  case ship.target {
+    ShipOutpostTarget(_) -> True
+    _ -> False
+  }
+}
+
+pub fn ship_targeting_outpost(ship: Ship, outpost: Outpost) -> Bool {
+  case ship.target {
+    ShipOutpostTarget(target_id) if target_id == outpost.id -> True
+    _ -> False
+  }
+}
+
+pub fn ship_target_ship(ship: Ship) -> Bool {
+  case ship.target {
+    ShipShipTarget(_) -> True
+    _ -> False
+  }
+}
+
+pub fn ship_targeting_ship(ship: Ship, target: Ship) -> Bool {
+  case ship.target {
+    ShipShipTarget(target_id) if target_id == target.id -> True
+    _ -> False
+  }
+}
+
+pub fn ship_target_unknown(ship: Ship) -> Bool {
+  case ship.target {
+    UnknownTarget(_) -> True
+    _ -> False
+  }
+}
+
+pub fn ship_get_targeted_outpost(
+  world: World,
+  ship: Ship,
+) -> Result(Outpost, Nil) {
+  case ship.target {
+    ShipOutpostTarget(outpost_id) ->
+      list.find(world.outposts, fn(outpost) { outpost.id == outpost_id })
+    _ -> Error(Nil)
+  }
+}
+
+pub fn ship_get_targeted_ship(world: World, ship: Ship) -> Result(Ship, Nil) {
+  case ship.target {
+    ShipShipTarget(ship_id) ->
+      list.find(world.ships, fn(ship) { ship.id == ship_id })
+    _ -> Error(Nil)
+  }
+}
+
+pub fn ship_get_unknown_target_heading(
+  _world: World,
+  ship: Ship,
+) -> Result(Float, Nil) {
+  case ship.target {
+    UnknownTarget(heading) -> Ok(heading)
+    _ -> Error(Nil)
+  }
+}
+
 pub fn ship_retarget_to_outpost(ship: Ship, outpost: Outpost) -> Ship {
   Ship(..ship, target: ShipOutpostTarget(outpost.id))
 }
@@ -255,6 +337,47 @@ pub fn ship_retarget_to_ship(ship: Ship, target_ship: Ship) -> Ship {
 pub type ShipOwner {
   ShipPlayerOwned(player_id: String)
   ShipUnowned
+}
+
+pub fn ship_is_player_owned(ship: Ship) -> Bool {
+  case ship.owner {
+    ShipPlayerOwned(_) -> True
+    _ -> False
+  }
+}
+
+pub fn ship_is_owned_by_player(ship: Ship, player: Player) -> Bool {
+  case ship.owner {
+    ShipPlayerOwned(player_id) if player_id == player.id -> True
+    _ -> False
+  }
+}
+
+pub fn ship_is_unowned(ship: Ship) -> Bool {
+  case ship.owner {
+    ShipUnowned -> True
+    _ -> False
+  }
+}
+
+pub fn ship_set_unowned(ship: Ship) -> Ship {
+  Ship(..ship, owner: ShipUnowned)
+}
+
+pub fn ship_set_owner_player(ship: Ship, player: Player) -> Ship {
+  Ship(..ship, owner: ShipPlayerOwned(player.id))
+}
+
+pub fn ship_get_owning_player(world: World, ship: Ship) -> Result(Player, Nil) {
+  case ship.owner {
+    ShipPlayerOwned(owner_id) ->
+      list.find(world.players, fn(player) { player.id == owner_id })
+    _ -> Error(Nil)
+  }
+}
+
+pub fn ship_get_targeting_ships(world: World, ship: Ship) -> List(Ship) {
+  list.filter(world.ships, ship_targeting_ship(_, ship))
 }
 
 pub opaque type Specialist {
