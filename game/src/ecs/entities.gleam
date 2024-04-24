@@ -1,15 +1,23 @@
 import gleam/bool.{guard}
 import gleam/option.{type Option, None, Some}
+import gleam/result
 import gleam/list
 import idgen
+
+pub fn new_entity_id() -> String {
+  idgen.new(64)
+}
 
 pub opaque type Player {
   Player(id: String)
 }
 
-pub fn new_player() -> Player {
-  idgen.new(32)
-  |> Player
+pub fn new_player(id: String) -> Player {
+  Player(id)
+}
+
+pub fn player_ids_match(left: Player, right: Player) -> Bool {
+  left.id == right.id
 }
 
 pub fn list_owned_outposts(world: World, player: Player) -> List(Outpost) {
@@ -49,8 +57,15 @@ pub opaque type Outpost {
   )
 }
 
-pub fn new_factory(location: #(Float, Float), owner: Option(String)) -> Outpost {
-  let id = idgen.new(32)
+pub fn outpost_ids_match(left: Outpost, right: Outpost) -> Bool {
+  left.id == right.id
+}
+
+pub fn new_factory(
+  id: String,
+  location: #(Float, Float),
+  owner: Option(String),
+) -> Outpost {
   let ownership = case owner {
     Some(id) -> OutpostPlayerOwned(id)
     None -> OutpostUnowned
@@ -66,10 +81,10 @@ pub fn new_factory(location: #(Float, Float), owner: Option(String)) -> Outpost 
 }
 
 pub fn new_generator(
+  id: String,
   location: #(Float, Float),
   owner: Option(String),
 ) -> Outpost {
-  let id = idgen.new(32)
   let ownership = case owner {
     Some(id) -> OutpostPlayerOwned(id)
     None -> OutpostUnowned
@@ -85,10 +100,10 @@ pub fn new_generator(
 }
 
 pub fn new_unknown_outpost(
+  id: String,
   location: #(Float, Float),
   owner: Option(String),
 ) -> Outpost {
-  let id = idgen.new(32)
   let ownership = case owner {
     Some(id) -> OutpostPlayerOwned(id)
     None -> OutpostUnowned
@@ -229,13 +244,17 @@ pub opaque type Ship {
   )
 }
 
+pub fn ship_ids_match(left: Ship, right: Ship) -> Bool {
+  left.id == right.id
+}
+
 pub fn new_ship(
+  id: String,
   location: #(Float, Float),
   target: ShipTarget,
   owner: Option(String),
   units: Int,
 ) -> Ship {
-  let id = idgen.new(32)
   let owner = case owner {
     Some(owner_id) -> ShipPlayerOwned(owner_id)
     None -> ShipUnowned
@@ -389,11 +408,36 @@ pub opaque type Specialist {
   )
 }
 
+pub fn specialist_ids_match(left: Specialist, right: Specialist) -> Bool {
+  left.id == right.id
+}
+
+pub fn new_specialist(
+  id: String,
+  specialist_type: SpecialistType,
+  specialist_location: SpecialistLocation,
+  owner: Option(String),
+) -> Specialist {
+  let owner = case owner {
+    Some(owner_id) -> SpecPlayerOwned(owner_id)
+    None -> SpecUnowned
+  }
+
+  Specialist(id, specialist_type, specialist_location, owner)
+}
+
 pub type SpecialistType {
   Queen
   Princess
   Pirate
   Helmsman
+}
+
+pub fn spec_set_type(
+  specialist: Specialist,
+  spec_type: SpecialistType,
+) -> Specialist {
+  Specialist(..specialist, specialist_type: spec_type)
 }
 
 pub type SpecialistLocation {
@@ -402,8 +446,42 @@ pub type SpecialistLocation {
   SpecUnknownLocation
 }
 
+pub fn spec_set_location(
+  spec: Specialist,
+  new_location: SpecialistLocation,
+) -> Specialist {
+  Specialist(..spec, location: new_location)
+}
+
+pub fn spec_new_outpost_location(outpost: Outpost) -> SpecialistLocation {
+  SpecOutpostLocation(outpost.id)
+}
+
+pub fn spec_new_ship_location(ship: Ship) -> SpecialistLocation {
+  SpecShipLocation(ship.id)
+}
+
+pub fn spec_new_unknown_location() -> SpecialistLocation {
+  SpecUnknownLocation
+}
+
 pub type SpecialistOwnership {
   SpecPlayerOwned(player_id: String)
+  SpecUnowned
+}
+
+pub fn spec_set_ownership(
+  spec: Specialist,
+  owner: SpecialistOwnership,
+) -> Specialist {
+  Specialist(..spec, owner: owner)
+}
+
+pub fn spec_new_player_owner(player: Player) -> SpecialistOwnership {
+  SpecPlayerOwned(player.id)
+}
+
+pub fn spec_new_unowned_owner() -> SpecialistOwnership {
   SpecUnowned
 }
 
@@ -425,11 +503,248 @@ pub opaque type World {
   )
 }
 
-pub type WorldConfig {
-  WorldConfig
+pub fn new_server_world(config: WorldConfig) -> World {
+  World(
+    world_type: ServerWorld,
+    current_tick: 0,
+    size: 0,
+    players: [],
+    outposts: [],
+    ships: [],
+    specialists: [],
+    config: config,
+  )
+}
+
+pub fn new_client_world(config: WorldConfig, player: Player) -> World {
+  World(
+    world_type: ClientWorld(player.id),
+    current_tick: 0,
+    size: 0,
+    players: [],
+    outposts: [],
+    ships: [],
+    specialists: [],
+    config: config,
+  )
+}
+
+fn upsert_list_multiple(
+  input_list: List(a),
+  items items: List(a),
+  matcher matcher: fn(a, a) -> Bool,
+) -> List(a) {
+  let #(remaining, list) =
+    list.map_fold(input_list, items, fn(remaining_items, curr) {
+      use <- guard(list.is_empty(remaining_items), #([], curr))
+
+      let matches_remaining_item = list.find(remaining_items, matcher(curr, _))
+      use <- guard(result.is_error(matches_remaining_item), #(
+        remaining_items,
+        curr,
+      ))
+
+      let assert Ok(item) = matches_remaining_item
+      let filtered_remaining_items =
+        list.filter(remaining_items, fn(item) { !matcher(item, curr) })
+
+      #(filtered_remaining_items, item)
+    })
+
+  list.concat([remaining, list])
+}
+
+fn delete_list_multiple(
+  input_list: List(a),
+  to_delete to_delete: List(a),
+  matcher matcher: fn(a, a) -> Bool,
+) -> List(a) {
+  list.filter(input_list, fn(curr) { list.any(to_delete, matcher(_, curr)) })
+}
+
+pub fn world_set_tick(world: World, new_tick: Int) -> World {
+  World(..world, current_tick: new_tick)
+}
+
+pub fn world_set_size(world: World, size: Int) -> World {
+  World(..world, size: size)
+}
+
+pub fn world_set_players_list(world: World, new_players: List(Player)) -> World {
+  World(..world, players: new_players)
+}
+
+pub fn world_set_player(world: World, new_player: Player) -> World {
+  let updated_players =
+    upsert_list_multiple(world.players, [new_player], player_ids_match)
+
+  World(..world, players: updated_players)
+}
+
+pub fn world_set_players_many(world: World, new_players: List(Player)) -> World {
+  let updated_players =
+    upsert_list_multiple(world.players, new_players, player_ids_match)
+
+  World(..world, players: updated_players)
+}
+
+pub fn world_delete_player(world: World, player: Player) -> World {
+  let updated_players =
+    delete_list_multiple(world.players, [player], player_ids_match)
+
+  World(..world, players: updated_players)
+}
+
+pub fn world_delete_players_many(world: World, players: List(Player)) -> World {
+  let updated_players =
+    delete_list_multiple(world.players, players, player_ids_match)
+
+  World(..world, players: updated_players)
+}
+
+pub fn world_set_outposts_list(
+  world: World,
+  new_outposts: List(Outpost),
+) -> World {
+  World(..world, outposts: new_outposts)
+}
+
+pub fn world_set_outpost(world: World, outpost: Outpost) -> World {
+  let updated_outposts =
+    delete_list_multiple(world.outposts, [outpost], outpost_ids_match)
+
+  World(..world, outposts: updated_outposts)
+}
+
+pub fn world_set_outposts_many(
+  world: World,
+  new_outposts: List(Outpost),
+) -> World {
+  let updated_outposts =
+    delete_list_multiple(world.outposts, new_outposts, outpost_ids_match)
+
+  World(..world, outposts: updated_outposts)
+}
+
+pub fn world_delete_outpost(world: World, outpost: Outpost) -> World {
+  let updated_outposts =
+    delete_list_multiple(world.outposts, [outpost], outpost_ids_match)
+
+  World(..world, outposts: updated_outposts)
+}
+
+pub fn world_delete_outposts_many(
+  world: World,
+  to_delete: List(Outpost),
+) -> World {
+  let updated_outposts =
+    delete_list_multiple(world.outposts, to_delete, outpost_ids_match)
+
+  World(..world, outposts: updated_outposts)
+}
+
+pub fn world_set_ships_list(world: World, new_ships: List(Ship)) -> World {
+  World(..world, ships: new_ships)
+}
+
+pub fn world_set_ship(world: World, ship: Ship) -> World {
+  let updated_ships = delete_list_multiple(world.ships, [ship], ship_ids_match)
+
+  World(..world, ships: updated_ships)
+}
+
+pub fn world_set_ships_many(world: World, new_ships: List(Ship)) -> World {
+  let updated_ships =
+    delete_list_multiple(world.ships, new_ships, ship_ids_match)
+
+  World(..world, ships: updated_ships)
+}
+
+pub fn world_delete_ship(world: World, ship: Ship) -> World {
+  let updated_ships = delete_list_multiple(world.ships, [ship], ship_ids_match)
+
+  World(..world, ships: updated_ships)
+}
+
+pub fn world_delete_ships_many(world: World, to_delete: List(Ship)) -> World {
+  let updated_ships =
+    delete_list_multiple(world.ships, to_delete, ship_ids_match)
+
+  World(..world, ships: updated_ships)
+}
+
+pub fn world_set_specialists_list(
+  world: World,
+  new_specialists: List(Specialist),
+) -> World {
+  World(..world, specialists: new_specialists)
+}
+
+pub fn world_set_specialist(world: World, specialist: Specialist) -> World {
+  let updated_specialists =
+    delete_list_multiple(world.specialists, [specialist], specialist_ids_match)
+
+  World(..world, specialists: updated_specialists)
+}
+
+pub fn world_set_specialists_many(
+  world: World,
+  new_specialists: List(Specialist),
+) -> World {
+  let updated_specialists =
+    delete_list_multiple(
+      world.specialists,
+      new_specialists,
+      specialist_ids_match,
+    )
+
+  World(..world, specialists: updated_specialists)
+}
+
+pub fn world_delete_specialist(world: World, specialist: Specialist) -> World {
+  let updated_specialists =
+    delete_list_multiple(world.specialists, [specialist], specialist_ids_match)
+
+  World(..world, specialists: updated_specialists)
+}
+
+pub fn world_delete_specialists_many(
+  world: World,
+  to_delete: List(Specialist),
+) -> World {
+  let updated_specialists =
+    delete_list_multiple(world.specialists, to_delete, specialist_ids_match)
+
+  World(..world, specialists: updated_specialists)
+}
+
+pub opaque type WorldConfig {
+  WorldConfig(gamemode: GameMode)
+}
+
+pub fn new_standard_config() -> WorldConfig {
+  WorldConfig(gamemode: Standard)
+}
+
+pub fn new_quickplay_config() -> WorldConfig {
+  WorldConfig(gamemode: Quickplay)
 }
 
 pub type WorldType {
   ServerWorld
   ClientWorld(for_player_id: String)
+}
+
+pub fn world_is_server_world(world: World) -> Bool {
+  case world.world_type {
+    ServerWorld -> True
+    _ -> False
+  }
+}
+
+pub fn world_is_client_world(world: World) -> Bool {
+  case world.world_type {
+    ClientWorld(_) -> True
+    _ -> False
+  }
 }
