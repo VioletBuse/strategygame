@@ -1,4 +1,8 @@
+mod world;
+mod entities;
+mod systems;
 mod utils;
+mod actions;
 
 use wasm_bindgen::prelude::*;
 
