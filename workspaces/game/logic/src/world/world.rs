@@ -6,7 +6,7 @@ pub enum WorldVariant {
 
 #[derive(Clone, Debug)]
 pub struct WorldConfig {
-    pub hireable_specs: Vec<specialist::Variant>,
+    pub hireable_specs: Vec<specialist::SpecialistVariant>,
     pub ticks_per_hire: u16,
 }
 

@@ -1,5 +1,5 @@
-use crate::entities::specialist::{Variant};
-use crate::entities::specialist::Variant::Queen;
+use crate::entities::specialist::{SpecialistVariant};
+use crate::entities::specialist::SpecialistVariant::Queen;
 use crate::world::world;
 use rand::seq::SliceRandom;
 
@@ -16,10 +16,10 @@ pub fn handler(world: &mut world::World, config: &world::WorldConfig) {
 
                 hireable.shuffle(&mut rng);
 
-                let selected: Vec<Variant> = hireable.iter().take(2).clone().collect();
+                let selected: Vec<SpecialistVariant> = hireable.iter().take(2).clone().collect();
 
                 *ticks = 0;
-                *upcoming.push((selected));
+                *upcoming.push(selected);
                 *available += 1;
             },
             _ => ()
