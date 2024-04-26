@@ -1,28 +1,23 @@
-use crate::entities::specialist::{SpecialistVariant};
-use crate::entities::specialist::SpecialistVariant::Queen;
 use crate::world::world;
 use rand::seq::SliceRandom;
 
 pub fn handler(world: &mut world::World, config: &world::WorldConfig) {
-
-    let ticks_per_new_hire = &config.ticks_per_hire;
     let mut hireable = config.to_owned().hireable_specs.to_owned();
     let mut rng = rand::thread_rng();
 
     world.specialists.iter_mut().for_each(|spec| {
+        if spec.variant.is_queen() {
+            let mut shuffled = hireable.clone();
+            shuffled.shuffle(&mut rng);
 
-        match &mut spec.variant {
-            Queen {ticks_since_update: ticks, upcoming_hires: upcoming, hires_available: available} if *ticks >= *ticks_per_new_hire as u32 => {
+            let selected = shuffled.iter()
+                .take(config.choices_per_hire as usize)
+                .map(|variant| variant.clone())
+                .collect();
 
-                hireable.shuffle(&mut rng);
-
-                let selected: Vec<SpecialistVariant> = hireable.iter().take(2).clone().collect();
-
-                *ticks = 0;
-                *upcoming.push(selected);
-                *available += 1;
-            },
-            _ => ()
+            spec.variant.queen_reset_ticks_since();
+            spec.variant.queen_push_upcoming_hire(selected);
+            spec.variant.queen_increment_hires_available();
         }
     })
 }

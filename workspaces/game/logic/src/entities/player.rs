@@ -9,19 +9,19 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn get_own_outposts(&self, world: &World) -> Vec<&Outpost> {
+    pub fn get_own_outposts<'a>(&'a self, world: &'a World) -> Vec<&Outpost> {
         world.outposts.iter()
-            .filter(|&&outpost| outpost.owner.get_owner_id() == Some(self.id.clone()))
+            .filter(|outpost| outpost.owner.get_owner_id() == Some(self.id.clone()))
             .collect()
     }
-    pub fn get_own_specialists(&self, world: &World) -> Vec<&Specialist> {
+    pub fn get_own_specialists<'a>(&'a self, world: &'a World) -> Vec<&Specialist> {
         world.specialists.iter()
-            .filter(|&&specialist| specialist.owner.get_owner_id() == Some(self.id.clone()))
+            .filter(|specialist| specialist.owner.get_owner_id() == Some(self.id.clone()))
             .collect()
     }
-    pub fn get_own_ships(&self, world: &World) -> Vec<&Ship> {
+    pub fn get_own_ships<'a>(&'a self, world: &'a World) -> Vec<&Ship> {
         world.ships.iter()
-            .filter(|&&ship| ship.owner.get_owner_id() == Some(self.id.clone()))
+            .filter(|ship| ship.owner.get_owner_id() == Some(self.id.clone()))
             .collect()
     }
 }

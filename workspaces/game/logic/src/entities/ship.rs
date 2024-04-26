@@ -36,11 +36,11 @@ impl ShipOwner {
             _ => None
         }
     }
-    pub fn get_owning_player(&self, world: &World) -> Option<&Player> {
+    pub fn get_owning_player<'a>(&'a self, world: &'a World) -> Option<&Player> {
         match self {
             ShipPlayerOwned { player_id } => {
                 world.players.iter()
-                    .find(|&&player| player.id == player_id.to_string())
+                    .find(|player| player.id == player_id.to_string())
             }
             _ => None
         }
@@ -100,20 +100,20 @@ impl ShipTarget {
             _ => None
         }
     }
-    pub fn get_outpost_target(&self, world: &World) -> Option<&Outpost> {
+    pub fn get_outpost_target<'a>(&'a self, world: &'a World) -> Option<&Outpost> {
         match self {
             ShipOutpostTarget { outpost_id } => {
                 world.outposts.iter()
-                    .find(|&&outpost| outpost.id == outpost_id.to_string())
+                    .find(|outpost| outpost.id == outpost_id.to_string())
             }
             _ => None
         }
     }
-    pub fn get_ship_target(&self, world: &World) -> Option<&Ship> {
+    pub fn get_ship_target<'a>(&'a self, world: &'a World) -> Option<&Ship> {
         match self {
             ShipShipTarget { ship_id } => {
                 world.ships.iter()
-                    .find(|&&ship| ship.id == ship_id.to_string())
+                    .find(|ship| ship.id == ship_id.to_string())
             }
             _ => None
         }
@@ -146,16 +146,16 @@ pub struct Ship {
 }
 
 impl Ship {
-    pub fn get_specialists(&self, world: &World) -> Vec<&Specialist> {
+    pub fn get_specialists<'a>(&'a self, world: &'a World) -> Vec<&Specialist> {
         world.specialists.iter()
-            .filter(|&&spec|
+            .filter(|spec|
                 spec.location.get_ship_location_id() == Some(self.id.clone()) &&
                     spec.owner.get_owner_id() == self.owner.get_owner_id())
             .collect()
     }
-    pub fn get_jailed_specialists(&self, world: &World) -> Vec<&Specialist> {
+    pub fn get_jailed_specialists<'a>(&'a self, world: &'a World) -> Vec<&Specialist> {
         world.specialists.iter()
-            .filter(|&&spec|
+            .filter(|spec|
                 spec.location.get_ship_location_id() == Some(self.id.clone()) &&
                     spec.owner.get_owner_id() != self.owner.get_owner_id())
             .collect()

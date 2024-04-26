@@ -1,11 +1,11 @@
 use crate::entities::{outpost, player, ship, specialist};
+use crate::entities::specialist::Specialist;
 
-pub enum WorldVariant {
-
-}
+pub enum WorldVariant {}
 
 #[derive(Clone, Debug)]
 pub struct WorldConfig {
+    pub choices_per_hire: u8,
     pub hireable_specs: Vec<specialist::SpecialistVariant>,
     pub ticks_per_hire: u16,
 }
@@ -18,7 +18,11 @@ pub struct World {
     pub outposts: Vec<outpost::Outpost>,
     pub ships: Vec<ship::Ship>,
     pub players: Vec<player::Player>,
-    pub specialists: Vec<specialist::Specialist>
+    pub specialists: Vec<Specialist>,
 }
 
-impl World {}
+impl World {
+    pub fn add_specialist(&mut self, specialist: Specialist) {
+        self.specialists.push(specialist)
+    }
+}

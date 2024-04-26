@@ -77,7 +77,7 @@ impl OutpostOwner {
             _ => None
         }
     }
-    pub fn get_owning_player(&self, world: &World) -> Option<&Player> {
+    pub fn get_owning_player<'a>(&'a self, world: &'a World) -> Option<&Player> {
         match self {
             OutpostPlayerOwned { owner_id } => {
                 world.players.iter()
@@ -112,16 +112,16 @@ pub struct Outpost {
 }
 
 impl Outpost {
-    pub fn stationed_specialists(&self, world: &World) -> Vec<&Specialist> {
+    pub fn stationed_specialists<'a>(&'a self, world: &'a World) -> Vec<&Specialist> {
         world.specialists.iter()
-            .filter(|&&spec|
+            .filter(|spec|
                 spec.location.get_outpost_location_id() == Some(self.id.clone()) &&
                     spec.owner.get_owner_id() == self.owner.get_owner_id())
             .collect()
     }
-    pub fn jailed_specialists(&self, world: &World) -> Vec(&Specialist) {
+    pub fn jailed_specialists<'a>(&'a self, world: &'a World) -> Vec<&Specialist> {
         world.specialists.iter()
-            .filter(|&&spec| spec.location.get_outpost_location_id() == Some(self.id.clone()) &&
+            .filter(|spec| spec.location.get_outpost_location_id() == Some(self.id.clone()) &&
                 spec.owner.get_owner_id() != self.owner.get_owner_id())
             .collect()
     }
