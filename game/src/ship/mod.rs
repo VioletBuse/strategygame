@@ -1,22 +1,29 @@
+use enum_as_inner::EnumAsInner;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct ShipData {
     id: String
 }
 
-#[derive(Debug, Clone)]
-pub enum ShipState {
+#[derive(Debug, Clone, EnumAsInner)]
+pub enum Ship {
     Ship(ShipData)
 }
 
-impl ShipState {
-    pub fn collect(&mut self, ship_transition: ShipTransition) {
-        match (self, ship_transition) {
-            _ => {}
+pub type ShipStateResult = Result<(), ShipError>;
+
+pub enum ShipError {
+    InvalidTransition
+}
+
+impl Ship {
+    pub fn collect(mut self, transition: Transition) -> ShipStateResult {
+        match (self, transition) {
+            _ => Err(ShipError::InvalidTransition)
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ShipTransition {}
+pub enum Transition {}
 

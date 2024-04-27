@@ -1,10 +1,14 @@
-#[derive(Debug, Clone)]
+mod owner;
+
+use enum_as_inner::EnumAsInner;
+
+#[derive(Default, Debug, Clone)]
 pub struct OutpostData {
     id: String,
-    units: u16,
+    units: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Outpost {
     Generator(OutpostData),
     Factory(OutpostData),
@@ -12,42 +16,65 @@ pub enum Outpost {
     Wreck(OutpostData),
 }
 
-impl Outpost {
-    pub fn collect(&mut self, outpost_transition: Transition) {
-        match (self, outpost_transition) {
-            (Outpost::Generator(data), Transition::PromoteToMine(units_required))
-            if data.units >= units_required => { *self = Outpost::Mine(data.clone()) }
-            (Outpost::Factory(data), Transition::PromoteToMine(units_required))
-            if data.units >= units_required => { *self = Outpost::Mine(data.clone()) }
-            (_, Transition::PromoteToMine(_)) => {}
-            (current_outpost, Transition::DemoteToWreck) => {
-                let data = current_outpost.data_mut();
-                data.units = 0;
+pub type OutpostStateResult = Result<(), OutpostError>;
 
-                *self = Outpost::Wreck(data.clone())
-            }
-        }
-    }
-    fn data_mut(&mut self) -> &mut OutpostData {
-        match self {
-            Outpost::Generator(data) => data,
-            Outpost::Factory(data) => data,
-            Outpost::Mine(data) => data,
-            Outpost::Wreck(data) => data
-        }
-    }
-    pub fn data(&self) -> OutpostData {
-        match self {
-            Outpost::Generator(data) => data.clone(),
-            Outpost::Factory(data) => data.clone(),
-            Outpost::Mine(data) => data.clone(),
-            Outpost::Wreck(data) => data.clone()
+pub enum OutpostError {
+    NotEnoughUnitsToPromo,
+    InvalidOutpostType,
+    InvalidTransition,
+}
+
+impl Outpost {
+    pub fn collect(&mut self, transition: Transition) -> OutpostStateResult {
+        match transition {
+            Transition::PromoteToMine(_) => handle_promo_to_mine(self, transition),
+            Transition::DemoteToWreck => handle_demo_to_wreck(self, transition)
         }
     }
 }
 
+fn handle_promo_to_mine(outpost: &mut Outpost, transition: Transition) -> OutpostStateResult {
+    if (!transition.is_promote_to_mine()) {
+        return Err(OutpostError::InvalidTransition);
+    }
+
+    let mut curr = match outpost {
+        Outpost::Generator(inner) => inner,
+        Outpost::Factory(inner) => inner,
+        Outpost::Mine(inner) => inner,
+        Outpost::Wreck(_) => return Err(OutpostError::InvalidOutpostType)
+    };
+
+    let units_required = *transition.as_promote_to_mine().ok_or(OutpostError::InvalidTransition)?;
+    if (curr.units < units_required) {
+        return Err(OutpostError::NotEnoughUnitsToPromo);
+    }
+
+    curr.units -= units_required;
+    let inner = std::mem::take(curr);
+    *outpost = Outpost::Mine(inner);
+
+    Ok(())
+}
+
+
+fn handle_demo_to_wreck(outpost: &mut Outpost, transition: Transition) -> OutpostStateResult {
+    if !transition.is_demote_to_wreck() { return Err(OutpostError::InvalidTransition); }
+
+    let curr = outpost.as_mine_mut()
+        .or(outpost.as_factory_mut())
+        .or(outpost.as_mine_mut())
+        .ok_or(OutpostError::InvalidOutpostType)?;
+
+    let inner = std::mem::take(curr);
+    *outpost = Outpost::Wreck(inner);
+
+    Ok(())
+}
+
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Transition {
-    PromoteToMine(u16),
+    PromoteToMine(u32),
     DemoteToWreck,
 }
 

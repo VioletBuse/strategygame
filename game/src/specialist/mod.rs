@@ -1,10 +1,11 @@
+use enum_as_inner::EnumAsInner;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct SpecData {
     id: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Spec {
     Queen(SpecData),
     Princess(SpecData),
@@ -13,16 +14,40 @@ pub enum Spec {
     Helmsman(SpecData),
 }
 
+pub type SpecStateResult = Result<(), SpecialistError>;
+
+pub enum SpecialistError {
+    InvalidSpecForPromo
+}
+
 impl Spec {
-    pub fn collect(&mut self, spec_transition: Transition) {
-        match (self, spec_transition) {
-            (Spec::Princess(data), Transition::PromotePrincessToQueen) =>
-                { *self = Spec::Queen(data.clone()) }
-            (_, Transition::PromotePrincessToQueen) => {}
-            (Spec::Navigator(data), Transition::PromoteNavigatorToHelmsman) =>
-                { *self = Spec::Helmsman(data.clone()) }
-            (_, Transition::PromoteNavigatorToHelmsman) => {}
+    pub fn collect(&mut self, transition: Transition) -> SpecStateResult {
+        match transition {
+            Transition::PromotePrincessToQueen => handle_princess_to_queen_promo(self, transition),
+            Transition::PromoteNavigatorToHelmsman => handle_nav_to_helmsman_promo(self, transition)
         }
+    }
+}
+
+fn handle_princess_to_queen_promo(spec: &mut Spec, transition: Transition) -> SpecStateResult {
+    match spec.as_princess_mut() {
+        Some(curr) => {
+            let inner = std::mem::take(curr);
+            *spec = Spec::Queen(inner);
+            Ok(())
+        }
+        None => Err(SpecialistError::InvalidSpecForPromo)
+    }
+}
+
+fn handle_nav_to_helmsman_promo(spec: &mut Spec, transition: Transition) -> SpecStateResult {
+    match spec.as_navigator_mut() {
+        Some(curr) => {
+            let inner = std::mem::take(curr);
+            *spec = Spec::Helmsman(inner);
+            Ok(())
+        }
+        None => Err(SpecialistError::InvalidSpecForPromo)
     }
 }
 

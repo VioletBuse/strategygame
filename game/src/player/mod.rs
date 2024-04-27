@@ -1,25 +1,43 @@
+use enum_as_inner::EnumAsInner;
 
 #[derive(Debug, Clone)]
 pub struct PlayerData {
     id: String,
-    trans: bool
+    trans: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Player {
     Player(PlayerData)
 }
 
+pub type PlayerStateResult = Result<(), PlayerError>;
+
+pub enum PlayerError {
+    InvalidPlayerType,
+    PlayerAlreadyTrans
+}
+
 impl Player {
-    pub fn collect(&mut self, transition: Transition) {
-        match (self, transition) {
-            (Player::Player(data), Transition::TransPlayerGender) => { data.trans = !data.trans; }
+    pub fn collect(&mut self, transition: Transition) -> PlayerStateResult {
+        match transition {
+            Transition::TransPlayerGender => handle_transing_gender(self, transition)
         }
     }
-    pub fn data_mut(&mut self) -> &mut PlayerData {
-        match self {
-            Player::Player(data) => data
+}
+
+fn handle_transing_gender(player: &mut Player, transition: Transition) -> PlayerStateResult {
+    match player.as_player_mut() {
+        Some(inner) => {
+            if inner.trans {
+                return Err(PlayerError::PlayerAlreadyTrans);
+            }
+            
+            inner.trans = true;
+            
+            Ok(())
         }
+        None => Err(PlayerError::InvalidPlayerType)
     }
 }
 
