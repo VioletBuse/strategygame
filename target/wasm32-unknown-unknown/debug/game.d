@@ -1,0 +1,1 @@
+/Users/julian/strategygame/target/wasm32-unknown-unknown/debug/game.wasm: /Users/julian/strategygame/game/src/lib.rs /Users/julian/strategygame/game/src/outpost/mod.rs /Users/julian/strategygame/game/src/player/mod.rs /Users/julian/strategygame/game/src/ship/mod.rs /Users/julian/strategygame/game/src/specialist/mod.rs /Users/julian/strategygame/game/src/world/mod.rs

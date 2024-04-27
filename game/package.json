@@ -1,0 +1,15 @@
+{
+  "name": "game",
+  "version": "0.1.0",
+  "description": "the base game code",
+  "main": "index.js",
+  "scripts": {
+    "check": "cargo check",
+    "build": "cargo build --target=wasm32-unknown-unknown --release",
+    "build:debug": "cargo build --target=wasm32-unknown-unknown --debug",
+    "inspect": "wasm2wat ../target/wasm32-unknown-unknown/release/game.wasm",
+    "inspect:debug": "wams2wat ../target/wasm32-unknown-unknown/debug/game.wasm"
+  },
+  "author": "Violet Buse",
+  "license": "ISC"
+}
