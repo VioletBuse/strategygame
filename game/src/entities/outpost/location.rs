@@ -21,4 +21,9 @@ impl OutpostLocation {
     pub fn new(x: f64, y: f64) -> OutpostLocation {
         OutpostLocation::KnownOutpostLocation(x, y)
     }
+    pub fn get_coords(&self) -> Option<(f64, f64)> {
+        match self {
+            OutpostLocation::KnownOutpostLocation(x, y) => Some((x.clone(), y.clone()))
+        }
+    }
 }
