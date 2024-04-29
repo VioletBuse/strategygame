@@ -1,19 +1,20 @@
+use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use typed_builder::TypedBuilder;
 
 #[derive(Clone, Debug, TypedBuilder)]
 pub struct Ship {
-    id: i64,
+    pub id: i64,
     #[builder(setter(into))]
-    owner: ShipOwner,
+    pub owner: ShipOwner,
     #[builder(setter(into))]
-    location: ShipLocation,
+    pub location: ShipLocation,
     #[builder(setter(into))]
-    target: ShipTarget,
-    units: u32,
+    pub target: ShipTarget,
+    pub units: u32,
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum ShipOwner {
     ShipPlayerOwned(i64),
     ShipUnowned,
@@ -34,7 +35,7 @@ impl From<Option<i64>> for ShipOwner {
     }
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum ShipLocation {
     KnownShipLocation(f64, f64),
     UnknownShipLocation,
@@ -49,7 +50,7 @@ impl From<Option<(f64, f64)>> for ShipLocation {
     }
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum ShipTarget {
     TargetingOutpost(i64),
     TargetingShip(i64),

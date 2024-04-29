@@ -1,18 +1,20 @@
+use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use typed_builder::TypedBuilder;
 
 #[derive(Clone, Debug, TypedBuilder)]
 pub struct Outpost {
-    id: i64,
+    pub id: i64,
     #[builder(setter(into))]
-    variant: OutpostVariant,
+    pub variant: OutpostVariant,
     #[builder(setter(into))]
-    owner: OutpostOwner,
+    pub owner: OutpostOwner,
     #[builder(setter(into))]
-    location: OutpostLocation,
+    pub location: OutpostLocation,
+    units: u64,
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum OutpostVariant {
     Factory,
     Generator,
@@ -21,7 +23,7 @@ pub enum OutpostVariant {
     Unknown,
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum OutpostOwner {
     PlayerOwned(i64),
     Unowned,
@@ -36,7 +38,7 @@ impl From<Option<i64>> for OutpostOwner {
     }
 }
 
-#[derive(Clone, Debug, EnumAsInner)]
+#[derive(Clone, Debug, EnumAsInner, new)]
 pub enum OutpostLocation {
     Known(f64, f64),
 }
