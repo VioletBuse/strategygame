@@ -11,7 +11,7 @@ pub struct Outpost {
     pub owner: OutpostOwner,
     #[builder(setter(into))]
     pub location: OutpostLocation,
-    units: u64,
+    pub units: u64,
 }
 
 #[derive(Clone, Debug, EnumAsInner, new)]

@@ -7,12 +7,12 @@ use crate::entities::specialist::Specialist;
 
 #[derive(Clone, Debug)]
 pub struct World {
-    tick: u64,
-    size: (u64, u64),
-    players: HashMap<i64, Player>,
-    outposts: HashMap<i64, Outpost>,
-    ships: HashMap<i64, Ship>,
-    specialists: HashMap<i64, Specialist>,
+    pub tick: u64,
+    pub size: (u64, u64),
+    pub players: HashMap<i64, Player>,
+    pub outposts: HashMap<i64, Outpost>,
+    pub ships: HashMap<i64, Ship>,
+    pub specialists: HashMap<i64, Specialist>,
 }
 
 impl World {
