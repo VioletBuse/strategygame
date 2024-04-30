@@ -11,7 +11,7 @@ pub struct Ship {
     pub location: ShipLocation,
     #[builder(setter(into))]
     pub target: ShipTarget,
-    pub units: u32,
+    pub units: u64,
 }
 
 #[derive(Clone, Debug, EnumAsInner, new)]
@@ -63,14 +63,4 @@ impl From<f64> for ShipTarget {
     }
 }
 
-impl ShipTarget {
-    pub fn new_targeting_outpost(outpost_id: i64) -> ShipTarget {
-        ShipTarget::TargetingOutpost(outpost_id)
-    }
-    pub fn new_targeting_ship(ship_id: i64) -> ShipTarget {
-        ShipTarget::TargetingShip(ship_id)
-    }
-    pub fn new_targeting_unknown(heading: f64) -> ShipTarget {
-        ShipTarget::TargetUnknown(heading)
-    }
-}
+impl ShipTarget {}
