@@ -10,10 +10,10 @@ pub struct PlayerAction {
 
 #[derive(Clone, Debug, EnumAsInner, new)]
 pub enum PlayerActionEntityRef {
-    OutpostRef(i64),
-    PlayerRef(i64),
-    SpecialistRef(i64),
-    ShipRef(i64),
+    Outpost(i64),
+    Player(i64),
+    Specialist(i64),
+    Ship(i64),
 }
 
 #[derive(Clone, Debug, EnumAsInner, new)]
@@ -23,5 +23,8 @@ pub enum PlayerActionVariant {
         target: PlayerActionEntityRef,
         specs: Vec<PlayerActionEntityRef>,
         units: u64,
+    },
+    RedirectShip {
+        ship_id: i64,
     },
 }

@@ -1,137 +1,205 @@
+use derive_new::new;
+use enum_as_inner::EnumAsInner;
 use rand::Rng;
+use thiserror::Error;
 
-use crate::actions::ActionHandler;
 use crate::actions::actions_list::{PlayerAction, PlayerActionEntityRef, PlayerActionVariant};
+use crate::actions::ActionHandler;
+use crate::actions::PlayerActionHandlingError;
 use crate::entities::ship::{Ship, ShipLocation, ShipOwner, ShipTarget};
-use crate::entities::specialist::SpecialistLocation;
+use crate::entities::specialist::{Specialist, SpecialistLocation};
 use crate::entities::world::World;
 
 pub struct SendShipAction;
 
+#[derive(Error, Clone, Debug, EnumAsInner, new)]
+pub enum SendShipError {
+    #[error("SendShipAction: Could not send ship because player executing action does not exist")]
+    ExecutingPlayerDoesNotExist,
+    #[error("SendShipAction: Source outpost does not exist")]
+    SourceOutpostDoesNotExist,
+    #[error("SendShipAction: Source outpost location is not known")]
+    SourceOutpostLocationUnknown,
+    #[error("SendShipAction: Source outpost is not owned by executing player")]
+    SourceOutpostInvalidOwnership,
+    #[error("SendShipAction: Source outpost does not have enough units")]
+    NotEnoughUnitsAtSourceOutpost,
+    #[error("SendShipAction: Cannot target outpost that doesn't exist")]
+    TargetOutpostDoesntExist,
+    #[error("SendShipAction: Cannot target ship that doesn't exist")]
+    TargetShipDoesntExist,
+    #[error("SendShipAction: Cannot target ship if there isn't a pirate among the specialists")]
+    CannotTargetShipWithoutPirate,
+    #[error("SendShipAction: Otherwise invalid target")]
+    OtherwiseInvalidTarget,
+    #[error("SendShipAction: Not all specified specialists exist")]
+    InvalidSpecialistList,
+    #[error("Invalid action for send_ship")]
+    InvalidSendShipAction,
+}
+
+impl From<SendShipError> for PlayerActionHandlingError {
+    fn from(value: SendShipError) -> Self {
+        Self::SendShipError(value)
+    }
+}
 impl ActionHandler for SendShipAction {
     fn accepts_action(action: &PlayerActionVariant) -> bool {
         action.is_send_ship()
     }
-    fn action_is_valid(world: &World, action: &PlayerAction) -> bool {
-        if let PlayerAction {
+    fn action_is_valid(
+        world: &World,
+        action: &PlayerAction,
+    ) -> Result<(), PlayerActionHandlingError> {
+        let PlayerAction {
             executing_player,
-            player_action:
-                PlayerActionVariant::SendShip {
-                    from,
-                    target,
-                    specs,
-                    units,
-                },
-        } = action
+            player_action,
+        } = action;
+
+        if let PlayerActionVariant::SendShip {
+            from,
+            target,
+            specs,
+            units,
+        } = player_action
         {
-            let player = world.players.get(executing_player);
+            world
+                .players
+                .get(executing_player)
+                .ok_or(SendShipError::ExecutingPlayerDoesNotExist)?;
 
-            let executing_player_exists = player.is_some();
+            let source_outpost = world
+                .outposts
+                .get(from)
+                .ok_or(SendShipError::SourceOutpostDoesNotExist)?;
 
-            let source_outpost = world.outposts.get(from);
+            source_outpost
+                .owner
+                .as_player_owned()
+                .ok_or(SendShipError::SourceOutpostInvalidOwnership)
+                .and_then(|outpost_owner| match outpost_owner == executing_player {
+                    true => Ok(()),
+                    false => Err(SendShipError::SourceOutpostInvalidOwnership),
+                })?;
 
-            let outpost_exists = source_outpost.clone().is_some();
-            let outpost_correct_owner = source_outpost
-                .map(|outpost| outpost.owner.as_player_owned() == Some(executing_player))
-                .unwrap_or(false);
-            let outpost_enough_units = source_outpost
-                .map(|outpost| outpost.units >= *units)
-                .unwrap_or(false);
+            if source_outpost.units < *units {
+                return Err(PlayerActionHandlingError::from(
+                    SendShipError::NotEnoughUnitsAtSourceOutpost,
+                ));
+            }
 
-            let specialists = specs
+            let specialists: Vec<&Specialist> = specs
                 .iter()
-                .map(|spec| match spec.as_specialist_ref() {
-                    Some(spec_id) => world.specialists.get(spec_id),
-                    None => None,
+                .map(|spec| -> Option<&Specialist> {
+                    let spec_id = spec.as_specialist()?;
+                    world.specialists.get(spec_id)
                 })
-                .fold(Some(Vec::new()), |curr, spec_opt| match (curr, spec_opt) {
-                    (Some(vec), Some(spec)) => {
-                        let mut new_vec = vec.clone();
-                        new_vec.push(spec);
+                .collect::<Option<Vec<&Specialist>>>()
+                .ok_or(SendShipError::InvalidSpecialistList)?;
 
-                        Some(new_vec)
+            match target {
+                PlayerActionEntityRef::Outpost(outpost_id) => {
+                    if !world.outposts.contains_key(outpost_id) {
+                        return Err(PlayerActionHandlingError::from(
+                            SendShipError::TargetOutpostDoesntExist,
+                        ));
                     }
-                    _ => None,
-                });
-
-            let specialists_are_valid = specialists.is_some();
-
-            let target_is_valid = match target {
-                PlayerActionEntityRef::OutpostRef(outpost_id) => {
-                    world.outposts.contains_key(outpost_id)
                 }
-                PlayerActionEntityRef::ShipRef(ship_id) => {
-                    let ship_exists = world.ships.contains_key(ship_id);
-                    let specs_has_pirate = specialists
-                        .map(|spec_list| spec_list.iter().any(|spec| spec.variant.is_pirate()))
-                        .unwrap_or(false);
+                PlayerActionEntityRef::Ship(ship_id) => {
+                    if !world.ships.contains_key(ship_id) {
+                        return Err(PlayerActionHandlingError::from(
+                            SendShipError::TargetShipDoesntExist,
+                        ));
+                    }
 
-                    ship_exists && specs_has_pirate
+                    let includes_pirate = specialists
+                        .clone()
+                        .iter_mut()
+                        .any(|spec| spec.variant.is_pirate());
+
+                    if !includes_pirate {
+                        return Err(PlayerActionHandlingError::from(
+                            SendShipError::CannotTargetShipWithoutPirate,
+                        ));
+                    }
                 }
-                _ => false,
-            };
+                _ => {
+                    return Err(PlayerActionHandlingError::from(
+                        SendShipError::InvalidSendShipAction,
+                    ))
+                }
+            }
 
-            let valid = executing_player_exists
-                && outpost_exists
-                && outpost_correct_owner
-                && outpost_enough_units
-                && specialists_are_valid
-                && target_is_valid;
-
-            return valid;
+            return Ok(());
         }
 
-        false
+        Err(PlayerActionHandlingError::from(
+            SendShipError::InvalidSendShipAction,
+        ))
     }
-    fn handle(world: &mut World, action: &PlayerAction) -> anyhow::Result<()> {
-        let (from, target, specs, units) = action.player_action.as_send_ship()?;
+    fn handle(world: &mut World, action: &PlayerAction) -> Result<(), PlayerActionHandlingError> {
+        SendShipAction::action_is_valid(world, action)?;
+
+        let (from, target, specs, units) = action
+            .player_action
+            .as_send_ship()
+            .ok_or(SendShipError::InvalidSendShipAction)?;
 
         let mut rng = rand::thread_rng();
 
         let new_ship_id: i64 = rng.gen();
         let new_ship_owner = ShipOwner::new_ship_player_owned(action.executing_player);
         let new_ship_target = match target {
-            PlayerActionEntityRef::OutpostRef(outpost_id) => {
+            PlayerActionEntityRef::Outpost(outpost_id) => {
                 Some(ShipTarget::TargetingOutpost(*outpost_id))
             }
-            PlayerActionEntityRef::ShipRef(ship_id) => {
-                Some(ShipTarget::new_targeting_ship(*ship_id))
-            }
+            PlayerActionEntityRef::Ship(ship_id) => Some(ShipTarget::new_targeting_ship(*ship_id)),
             _ => None,
-        }?;
+        }
+        .ok_or(SendShipError::OtherwiseInvalidTarget)?;
 
         let new_ship_location = world
             .outposts
-            .get(&from)?
+            .get(from)
+            .ok_or(SendShipError::SourceOutpostDoesNotExist)?
             .location
             .as_known()
-            .map(|(x, y)| ShipLocation::new_known_ship_location(*x, *y))?;
+            .map(|(x, y)| ShipLocation::new_known_ship_location(*x, *y))
+            .ok_or(SendShipError::SourceOutpostLocationUnknown)?;
 
         let new_spec_location = SpecialistLocation::new_ship(new_ship_id);
-        let specialist_ids: Vec<i64> = specs
+        let specialist_ids: Vec<&i64> = specs
             .iter()
-            .filter_map(|reference| reference.as_specialist_ref())
-            .collect();
+            .map(|spec| spec.as_specialist())
+            .collect::<Option<Vec<&i64>>>()
+            .ok_or(SendShipError::InvalidSpecialistList)?;
 
-        let new_outpost_unit_count = world.outposts.get(&from)?.units - units;
+        let new_outpost_unit_count = world
+            .outposts
+            .get(from)
+            .ok_or(SendShipError::NotEnoughUnitsAtSourceOutpost)?
+            .units
+            - units;
 
         let new_ship = Ship::builder()
             .id(new_ship_id)
             .owner(new_ship_owner)
             .target(new_ship_target)
             .location(new_ship_location)
-            .units(units)
+            .units(*units)
             .build();
 
         world.ships.insert(new_ship_id, new_ship);
         world
             .outposts
-            .entry(from)
+            .entry(*from)
             .and_modify(|outpost| outpost.units = new_outpost_unit_count);
         world.specialists.iter_mut().for_each(|(key, value)| {
-            if specialist_ids.contains(key) {
+            if specialist_ids.contains(&key) {
                 value.location = new_spec_location.clone();
             }
-        })
+        });
+
+        Ok(())
     }
 }
