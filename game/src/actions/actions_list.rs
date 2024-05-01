@@ -2,13 +2,13 @@ use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use typed_builder::TypedBuilder;
 
-#[derive(Clone, Debug, TypedBuilder)]
+#[derive(Clone, Debug, PartialEq, TypedBuilder)]
 pub struct PlayerAction {
     pub executing_player: i64,
     pub player_action: PlayerActionVariant,
 }
 
-#[derive(Clone, Debug, EnumAsInner, new)]
+#[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum PlayerActionEntityRef {
     Outpost(i64),
     Player(i64),
@@ -16,7 +16,7 @@ pub enum PlayerActionEntityRef {
     Ship(i64),
 }
 
-#[derive(Clone, Debug, EnumAsInner, new)]
+#[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum PlayerActionVariant {
     SendShip {
         from: i64,

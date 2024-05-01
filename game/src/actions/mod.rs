@@ -1,4 +1,3 @@
-use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use thiserror::Error;
 
@@ -8,21 +7,22 @@ use crate::entities::world;
 mod actions_list;
 mod handlers;
 
-#[derive(Error, Clone, Debug, EnumAsInner, new)]
+#[derive(Error, Clone, PartialEq, Debug, EnumAsInner)]
 pub enum PlayerActionHandlingError {
-    #[error("Error sending ship")]
-    SendShipError(handlers::send_ship::SendShipError),
-    #[error("Executing player doesn't exist")]
+    #[error("PlayerActionHandlingError: Error sending ship")]
+    SendShipV1Error(handlers::send_ship::v_1::SendShipError),
+    #[error("PlayerActionHandlingError: Executing player doesn't exist")]
     ExecutingPlayerDoesntExist(i64),
-    #[error("Action is not valid")]
+    #[error("PlayerActionHandlingError: Action is not valid")]
     PlayerActionInvalid(PlayerAction),
-    #[error("No handler registered for action of this type")]
+    #[error("PlayerActionHandlingError: No handler registered for action of this type")]
     NoPlayerActionHandler(PlayerAction),
-    #[error("Action produced an invalid world")]
+    #[error("PlayerActionHandlingError: Action produced an invalid world")]
     WorldValidationError(world::WorldValidationError),
 }
 
 pub trait ActionHandler {
+    fn handler_id(&self) -> String;
     fn accepts_action(&self, action: &PlayerActionVariant) -> bool;
     fn action_is_valid(
         &self,
@@ -51,7 +51,7 @@ impl ActionsExecutor {
                 .iter()
                 .try_fold((), |_, action| -> Result<(), PlayerActionHandlingError> {
                     world.players.get(&action.executing_player).ok_or(
-                        PlayerActionHandlingError::new_executing_player_doesnt_exist(
+                        PlayerActionHandlingError::ExecutingPlayerDoesntExist(
                             action.executing_player,
                         ),
                     )?;
@@ -60,12 +60,12 @@ impl ActionsExecutor {
                         .handlers
                         .iter()
                         .find(|handler| handler.accepts_action(&action.player_action))
-                        .ok_or(PlayerActionHandlingError::new_no_player_action_handler(
+                        .ok_or(PlayerActionHandlingError::NoPlayerActionHandler(
                             action.to_owned(),
                         ))?;
 
                     handler.action_is_valid(world, action).map_err(|_| {
-                        PlayerActionHandlingError::new_player_action_invalid(action.to_owned())
+                        PlayerActionHandlingError::PlayerActionInvalid(action.to_owned())
                     })?;
 
                     handler.handle(world, action)?;

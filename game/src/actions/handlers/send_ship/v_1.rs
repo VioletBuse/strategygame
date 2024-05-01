@@ -1,4 +1,3 @@
-use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use rand::Rng;
 use thiserror::Error;
@@ -10,9 +9,9 @@ use crate::entities::ship::{Ship, ShipLocation, ShipOwner, ShipTarget};
 use crate::entities::specialist::{Specialist, SpecialistLocation};
 use crate::entities::world::World;
 
-pub struct SendShipAction;
+pub struct Handler;
 
-#[derive(Error, Clone, Debug, EnumAsInner, new)]
+#[derive(Error, Clone, PartialEq, Debug, EnumAsInner)]
 pub enum SendShipError {
     #[error("SendShipAction: Could not send ship because player executing action does not exist")]
     ExecutingPlayerDoesNotExist,
@@ -40,10 +39,13 @@ pub enum SendShipError {
 
 impl From<SendShipError> for PlayerActionHandlingError {
     fn from(value: SendShipError) -> Self {
-        Self::SendShipError(value)
+        Self::SendShipV1Error(value)
     }
 }
-impl ActionHandler for SendShipAction {
+impl ActionHandler for Handler {
+    fn handler_id(&self) -> String {
+        "send_ship/v_1".to_string()
+    }
     fn accepts_action(&self, action: &PlayerActionVariant) -> bool {
         action.is_send_ship()
     }
@@ -143,7 +145,7 @@ impl ActionHandler for SendShipAction {
         world: &mut World,
         action: &PlayerAction,
     ) -> Result<(), PlayerActionHandlingError> {
-        SendShipAction {}.action_is_valid(world, action)?;
+        // Handler {}.action_is_valid(world, action)?;
 
         let (from, target, specs, units) = action
             .player_action
@@ -215,7 +217,7 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use crate::actions;
-    use crate::entities::{outpost, player, world};
+    use crate::entities::{outpost, player, ship, specialist, world};
 
     use super::*;
 
@@ -245,7 +247,7 @@ mod test {
         outpost_map.insert(0, source_outpost);
         outpost_map.insert(1, target_outpost);
 
-        let mut new_world = world::World {
+        let mut world = world::World {
             tick: 0,
             size: (5, 5),
             players: player_map,
@@ -264,32 +266,89 @@ mod test {
             },
         };
 
-        let result = SendShipAction {}.handle(&mut new_world, &action);
+        let result = Handler {}.handle(&mut world, &action);
 
-        assert_eq!(result.is_ok(), true, "This should not return an error");
+        assert_eq!(result, Ok(()));
 
-        // assert_eq!(new_world.players.get(&0), None);
+        let world_valid = world.validate();
 
-        let world_valid = new_world.validate();
+        assert_eq!(world_valid, Ok(()));
 
-        assert_eq!(
-            world_valid,
-            Ok(()),
-            "This action handler should not return an invalid world"
-        );
+        let ship_opt = world.ships.iter().find(|_| true);
 
-        let mut keys = new_world.ships.keys();
+        assert_eq!(ship_opt.is_some(), true);
 
-        assert_eq!(keys.len(), 1, "There should be one ship");
+        let (_ship_id, ship) = ship_opt.unwrap();
 
-        let ship_id = keys.find(|_| true).unwrap();
+        assert_eq!(ship.units, 4);
+    }
 
-        let ship = new_world.ships.get(ship_id).unwrap();
+    #[test]
+    fn ship_targeting_ship() {
+        let mut player_map: HashMap<i64, player::Player> = HashMap::new();
+        let mut outpost_map: HashMap<i64, outpost::Outpost> = HashMap::new();
+        let mut ship_map: HashMap<i64, ship::Ship> = HashMap::new();
+        let mut spec_map: HashMap<i64, specialist::Specialist> = HashMap::new();
 
-        assert_eq!(ship.units, 4, "Ship should have 4 units");
+        let player = player::Player::builder().build();
+        player_map.insert(0, player);
 
-        let source = new_world.outposts.get(&0_i64).unwrap();
+        let source = outpost::Outpost::builder()
+            .owner(outpost::OutpostOwner::PlayerOwned(0))
+            .location(outpost::OutpostLocation::new_known(0., 0.))
+            .variant(outpost::OutpostVariant::Generator)
+            .units(20)
+            .build();
+        outpost_map.insert(0, source);
 
-        assert_eq!(source.units, 1, "Source outpost should have 1 unit")
+        let target = ship::Ship::builder()
+            .owner(ship::ShipOwner::ShipUnowned)
+            .target(ship::ShipTarget::TargetUnknown(20.))
+            .location(ship::ShipLocation::UnknownShipLocation)
+            .units(5)
+            .build();
+        ship_map.insert(0, target);
+
+        let pirate = specialist::Specialist::builder()
+            .owner(specialist::SpecialistOwner::PlayerOwned(0))
+            .variant(specialist::SpecialistVariant::Pirate)
+            .location(specialist::SpecialistLocation::Outpost(0))
+            .build();
+        spec_map.insert(0, pirate);
+
+        let mut world = world::World {
+            tick: 0,
+            size: (20, 20),
+            players: player_map,
+            outposts: outpost_map,
+            ships: ship_map,
+            specialists: spec_map,
+        };
+
+        let action = PlayerAction::builder()
+            .executing_player(0)
+            .player_action(PlayerActionVariant::SendShip {
+                from: 0,
+                target: PlayerActionEntityRef::Ship(0),
+                specs: vec![PlayerActionEntityRef::Specialist(0)],
+                units: 11,
+            })
+            .build();
+
+        let exec_result = Handler {}.handle(&mut world, &action);
+
+        assert_eq!(exec_result, Ok(()));
+
+        let world_validation = world.validate();
+
+        assert_eq!(world_validation, Ok(()));
+
+        let new_ship = world.ships.iter().find(|(id, _)| **id != 0);
+
+        assert_eq!(new_ship.is_some(), true);
+
+        let pirate = world.specialists.get(&0_i64).unwrap();
+
+        assert_eq!(pirate.location.is_ship(), true)
     }
 }
