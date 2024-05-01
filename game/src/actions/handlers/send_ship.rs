@@ -44,10 +44,11 @@ impl From<SendShipError> for PlayerActionHandlingError {
     }
 }
 impl ActionHandler for SendShipAction {
-    fn accepts_action(action: &PlayerActionVariant) -> bool {
+    fn accepts_action(&self, action: &PlayerActionVariant) -> bool {
         action.is_send_ship()
     }
     fn action_is_valid(
+        &self,
         world: &World,
         action: &PlayerAction,
     ) -> Result<(), PlayerActionHandlingError> {
@@ -137,8 +138,12 @@ impl ActionHandler for SendShipAction {
             SendShipError::InvalidSendShipAction,
         ))
     }
-    fn handle(world: &mut World, action: &PlayerAction) -> Result<(), PlayerActionHandlingError> {
-        SendShipAction::action_is_valid(world, action)?;
+    fn handle(
+        &self,
+        world: &mut World,
+        action: &PlayerAction,
+    ) -> Result<(), PlayerActionHandlingError> {
+        SendShipAction {}.action_is_valid(world, action)?;
 
         let (from, target, specs, units) = action
             .player_action
@@ -182,7 +187,6 @@ impl ActionHandler for SendShipAction {
             - units;
 
         let new_ship = Ship::builder()
-            .id(new_ship_id)
             .owner(new_ship_owner)
             .target(new_ship_target)
             .location(new_ship_location)
@@ -217,10 +221,9 @@ mod test {
 
     #[test]
     fn basic_send_ship() {
-        let player_1 = player::Player::builder().id(0).build();
+        let player_1 = player::Player::builder().build();
 
         let source_outpost = outpost::Outpost::builder()
-            .id(0)
             .variant(outpost::OutpostVariant::new_generator())
             .owner(outpost::OutpostOwner::new_player_owned(0))
             .units(5)
@@ -228,7 +231,6 @@ mod test {
             .build();
 
         let target_outpost = outpost::Outpost::builder()
-            .id(1)
             .variant(outpost::OutpostVariant::new_generator())
             .owner(outpost::OutpostOwner::new_player_owned(0))
             .units(0)
@@ -262,9 +264,19 @@ mod test {
             },
         };
 
-        let result = SendShipAction::handle(&mut new_world, &action);
+        let result = SendShipAction {}.handle(&mut new_world, &action);
 
         assert_eq!(result.is_ok(), true, "This should not return an error");
+
+        // assert_eq!(new_world.players.get(&0), None);
+
+        let world_valid = new_world.validate();
+
+        assert_eq!(
+            world_valid,
+            Ok(()),
+            "This action handler should not return an invalid world"
+        );
 
         let mut keys = new_world.ships.keys();
 

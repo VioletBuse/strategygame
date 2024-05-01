@@ -4,7 +4,7 @@ use typed_builder::TypedBuilder;
 
 #[derive(Clone, Debug, TypedBuilder)]
 pub struct Outpost {
-    pub id: i64,
+    // pub id: i64,
     #[builder(setter(into))]
     pub variant: OutpostVariant,
     #[builder(setter(into))]
@@ -14,7 +14,7 @@ pub struct Outpost {
     pub units: u64,
 }
 
-#[derive(Clone, Debug, EnumAsInner, new)]
+#[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum OutpostVariant {
     Factory,
     Generator,
@@ -23,7 +23,7 @@ pub enum OutpostVariant {
     Unknown,
 }
 
-#[derive(Clone, Debug, EnumAsInner, new)]
+#[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum OutpostOwner {
     PlayerOwned(i64),
     Unowned,
@@ -38,7 +38,7 @@ impl From<Option<i64>> for OutpostOwner {
     }
 }
 
-#[derive(Clone, Debug, EnumAsInner, new)]
+#[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum OutpostLocation {
     Known(f64, f64),
 }
