@@ -3,8 +3,8 @@ use enum_as_inner::EnumAsInner;
 use rand::Rng;
 use thiserror::Error;
 
-use crate::actions::actions_list::{PlayerAction, PlayerActionEntityRef, PlayerActionVariant};
 use crate::actions::ActionHandler;
+use crate::actions::actions_list::{PlayerAction, PlayerActionEntityRef, PlayerActionVariant};
 use crate::actions::PlayerActionHandlingError;
 use crate::entities::ship::{Ship, ShipLocation, ShipOwner, ShipTarget};
 use crate::entities::specialist::{Specialist, SpecialistLocation};
@@ -201,5 +201,83 @@ impl ActionHandler for SendShipAction {
         });
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashMap;
+
+    use pretty_assertions::assert_eq;
+
+    use crate::actions;
+    use crate::entities::{outpost, player, world};
+
+    use super::*;
+
+    #[test]
+    fn basic_send_ship() {
+        let player_1 = player::Player::builder().id(0).build();
+
+        let source_outpost = outpost::Outpost::builder()
+            .id(0)
+            .variant(outpost::OutpostVariant::new_generator())
+            .owner(outpost::OutpostOwner::new_player_owned(0))
+            .units(5)
+            .location(outpost::OutpostLocation::new_known(0., 0.))
+            .build();
+
+        let target_outpost = outpost::Outpost::builder()
+            .id(1)
+            .variant(outpost::OutpostVariant::new_generator())
+            .owner(outpost::OutpostOwner::new_player_owned(0))
+            .units(0)
+            .location(outpost::OutpostLocation::new_known(2., 2.))
+            .build();
+
+        let mut player_map: HashMap<i64, player::Player> = HashMap::new();
+        let mut outpost_map: HashMap<i64, outpost::Outpost> = HashMap::new();
+
+        player_map.insert(0, player_1);
+
+        outpost_map.insert(0, source_outpost);
+        outpost_map.insert(1, target_outpost);
+
+        let mut new_world = world::World {
+            tick: 0,
+            size: (5, 5),
+            players: player_map,
+            outposts: outpost_map,
+            ships: HashMap::new(),
+            specialists: HashMap::new(),
+        };
+
+        let action = actions::PlayerAction {
+            executing_player: 0,
+            player_action: PlayerActionVariant::SendShip {
+                from: 0,
+                target: PlayerActionEntityRef::Outpost(0),
+                specs: vec![],
+                units: 4,
+            },
+        };
+
+        let result = SendShipAction::handle(&mut new_world, &action);
+
+        assert_eq!(result.is_ok(), true, "This should not return an error");
+
+        let mut keys = new_world.ships.keys();
+
+        assert_eq!(keys.len(), 1, "There should be one ship");
+
+        let ship_id = keys.find(|_| true).unwrap();
+
+        let ship = new_world.ships.get(ship_id).unwrap();
+
+        assert_eq!(ship.units, 4, "Ship should have 4 units");
+
+        let source = new_world.outposts.get(&0_i64).unwrap();
+
+        assert_eq!(source.units, 1, "Source outpost should have 1 unit")
     }
 }

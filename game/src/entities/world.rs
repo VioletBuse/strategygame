@@ -92,6 +92,14 @@ impl World {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct TestWorldBuilder {
+    players: Vec<Player>,
+    outposts: Vec<Outpost>,
+    ships: Vec<Ship>,
+    specialists: Vec<Specialist>,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
