@@ -19,6 +19,8 @@ pub enum SpecialistVariant {
     Pirate,
 }
 
+impl SpecialistVariant {}
+
 #[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum SpecialistOwner {
     PlayerOwned(i64),

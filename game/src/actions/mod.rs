@@ -2,13 +2,17 @@ use enum_as_inner::EnumAsInner;
 use thiserror::Error;
 
 use crate::actions::actions_list::{PlayerAction, PlayerActionVariant};
+use crate::actions::factory::action_handler_factory;
 use crate::entities::world;
 
 mod actions_list;
+mod factory;
 mod handlers;
 
 #[derive(Error, Clone, PartialEq, Debug, EnumAsInner)]
 pub enum PlayerActionHandlingError {
+    #[error("PlayerActionHandlingError: Unable to construct handlers for the following ids")]
+    ActionExecutorConstructionError(Vec<String>),
     #[error("PlayerActionHandlingError: Error sending ship")]
     SendShipV1Error(handlers::send_ship::v_1::SendShipError),
     #[error("PlayerActionHandlingError: Executing player doesn't exist")]
@@ -41,6 +45,9 @@ pub struct ActionsExecutor {
 }
 
 impl ActionsExecutor {
+    pub fn new(handlers: Vec<String>) -> Result<Self, PlayerActionHandlingError> {
+        action_handler_factory(handlers)
+    }
     pub fn handle_actions(
         &self,
         world: &mut world::World,

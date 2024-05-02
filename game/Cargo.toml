@@ -15,6 +15,7 @@ crate-type = ["cdylib"]
 anyhow = "1.0.82"
 derive-new = "0.6.0"
 enum-as-inner = "0.6.0"
+im = "15.1.0"
 rand = "0.8.5"
 safe-builder-derive = "0.1.1"
 serde = { version = "1.0.199", features = ["derive"] }

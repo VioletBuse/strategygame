@@ -9,6 +9,7 @@ use crate::entities::ship::{Ship, ShipLocation, ShipOwner, ShipTarget};
 use crate::entities::specialist::{Specialist, SpecialistLocation};
 use crate::entities::world::World;
 
+#[derive(Clone)]
 pub struct Handler;
 
 #[derive(Error, Clone, PartialEq, Debug, EnumAsInner)]
@@ -120,7 +121,7 @@ impl ActionHandler for Handler {
                         .iter_mut()
                         .any(|spec| spec.variant.is_pirate());
 
-                    if !includes_pirate {
+                    if !includes_pirate && world.config.target_ship_pirate_required {
                         return Err(PlayerActionHandlingError::from(
                             SendShipError::CannotTargetShipWithoutPirate,
                         ));
@@ -250,10 +251,12 @@ mod test {
         let mut world = world::World {
             tick: 0,
             size: (5, 5),
+            config: world::WorldConfig::default(),
             players: player_map,
             outposts: outpost_map,
             ships: HashMap::new(),
             specialists: HashMap::new(),
+            dead_specialists: HashMap::new(),
         };
 
         let action = actions::PlayerAction {
@@ -319,10 +322,12 @@ mod test {
         let mut world = world::World {
             tick: 0,
             size: (20, 20),
+            config: world::WorldConfig::default(),
             players: player_map,
             outposts: outpost_map,
             ships: ship_map,
             specialists: spec_map,
+            dead_specialists: HashMap::new(),
         };
 
         let action = PlayerAction::builder()

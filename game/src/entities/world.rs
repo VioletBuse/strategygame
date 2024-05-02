@@ -7,14 +7,29 @@ use thiserror::Error;
 use crate::actions::PlayerActionHandlingError;
 use crate::entities::{outpost, player, ship, specialist};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct World {
     pub tick: u64,
     pub size: (u64, u64),
+    pub config: WorldConfig,
     pub players: HashMap<i64, player::Player>,
     pub outposts: HashMap<i64, outpost::Outpost>,
     pub ships: HashMap<i64, ship::Ship>,
     pub specialists: HashMap<i64, specialist::Specialist>,
+    pub dead_specialists: HashMap<i64, specialist::Specialist>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct WorldConfig {
+    pub target_ship_pirate_required: bool,
+}
+
+impl Default for WorldConfig {
+    fn default() -> Self {
+        Self {
+            target_ship_pirate_required: true,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Error, EnumAsInner, new)]

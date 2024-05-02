@@ -2,7 +2,7 @@ use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use typed_builder::TypedBuilder;
 
-#[derive(Clone, Debug, TypedBuilder)]
+#[derive(Clone, Debug, PartialEq, TypedBuilder)]
 pub struct Outpost {
     // pub id: i64,
     #[builder(setter(into))]
