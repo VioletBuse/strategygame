@@ -33,6 +33,7 @@ fn handler_id_to_handler(id: String) -> Result<Handler, String> {
     match id.as_str() {
         "princess_promotion/v_1" => Ok(Box::new(handlers::princess_promotion::v_1::Handler {})),
         "queen_death/v_1" => Ok(Box::new(handlers::queen_death::v_1::Handler {})),
+        "dead_specialist_cleanup/v_1" => Ok(Box::new(handlers::dead_specialist_cleanup::v_1::Handler {})),
         _ => Err(id),
     }
 }
