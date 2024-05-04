@@ -22,12 +22,18 @@ pub struct World {
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfig {
     pub target_ship_pirate_required: bool,
+
+    // queen config
+    pub ticks_till_next_specialist_hire_incr: u32,
+    pub specialist_hire_choice_count: u8
 }
 
 impl Default for WorldConfig {
     fn default() -> Self {
         Self {
             target_ship_pirate_required: true,
+            specialist_hire_choice_count: 3,
+            ticks_till_next_specialist_hire_incr: 5_184
         }
     }
 }

@@ -1,3 +1,4 @@
+use std::collections::LinkedList;
 use derive_new::new;
 use enum_as_inner::EnumAsInner;
 use typed_builder::TypedBuilder;
@@ -10,16 +11,34 @@ pub struct Specialist {
     pub location: SpecialistLocation,
 }
 
+#[derive(Clone, Debug, PartialEq, TypedBuilder)]
+pub struct QueenState {
+    next_hires: LinkedList<Vec<SpecialistVariant>>,
+    hiring_slots: u8,
+    ticks_since_last_incr: u64,
+}
+
 #[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum SpecialistVariant {
-    Queen,
+    Queen(QueenState),
     Princess,
     Helmsman,
     Navigator,
     Pirate,
 }
 
-impl SpecialistVariant {}
+impl SpecialistVariant {
+    pub fn queen_default() -> SpecialistVariant {
+
+        let state = QueenState::builder()
+            .next_hires(LinkedList::new())
+            .hiring_slots(0)
+            .ticks_since_last_incr(0)
+            .build();
+
+        SpecialistVariant::Queen(state)
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
 pub enum SpecialistOwner {

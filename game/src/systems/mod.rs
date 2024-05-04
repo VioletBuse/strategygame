@@ -18,7 +18,9 @@ pub enum SystemHandlingError {
     #[error("SystemHandlingError: There was an error killing queen")]
     QueenDeathV1Error(handlers::queen_death::v_1::QueenDeathError),
     #[error("SystemHandlingError: There was an error cleaning up dead specialists")]
-    DeadSpecialistCleanupV1Error(handlers::dead_specialist_cleanup::v_1::SpecialistCleanupError)
+    DeadSpecialistCleanupV1Error(handlers::dead_specialist_cleanup::v_1::SpecialistCleanupError),
+    #[error("SystemHandlingError: There was an error generating new specialist hires")]
+    QueenHiringOptionsGenV1Error(handlers::queen_hiring_options::v_1::QueenHiringOptionsGenError)
 }
 
 pub trait SystemHandler {
