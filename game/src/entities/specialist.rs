@@ -13,9 +13,9 @@ pub struct Specialist {
 
 #[derive(Clone, Debug, PartialEq, TypedBuilder)]
 pub struct QueenState {
-    next_hires: LinkedList<Vec<SpecialistVariant>>,
-    hiring_slots: u8,
-    ticks_since_last_incr: u64,
+    pub next_hires: LinkedList<Vec<SpecialistVariant>>,
+    pub hiring_slots: u8,
+    pub ticks_since_last_incr: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, EnumAsInner, new)]
@@ -28,6 +28,13 @@ pub enum SpecialistVariant {
 }
 
 impl SpecialistVariant {
+    pub fn generate_defaults() -> Vec<SpecialistVariant> {
+        vec![
+            Self::new_princess(),
+            Self::new_navigator(),
+            Self::new_pirate()
+        ]
+    }
     pub fn queen_default() -> SpecialistVariant {
 
         let state = QueenState::builder()
