@@ -24,7 +24,7 @@ pub enum PlayerActionVariant {
         specs: Vec<PlayerActionEntityRef>,
         units: u64,
     },
-    RedirectShip {
-        ship_id: i64,
+    HireSpecialist {
+        choice: usize,
     },
 }

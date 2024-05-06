@@ -15,6 +15,8 @@ pub enum PlayerActionHandlingError {
     ActionExecutorConstructionError(Vec<String>),
     #[error("PlayerActionHandlingError: Error sending ship")]
     SendShipV1Error(handlers::send_ship::v_1::SendShipError),
+    #[error("PlayerActionHandlingError: Error hiring specialist")]
+    HireSpecialistV1Error(handlers::hire_specialist::v_1::HireSpecialistError),
     #[error("PlayerActionHandlingError: Executing player doesn't exist")]
     ExecutingPlayerDoesntExist(i64),
     #[error("PlayerActionHandlingError: Action is not valid")]
