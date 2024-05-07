@@ -31,7 +31,8 @@ pub fn action_handler_factory(
 
 fn handler_id_to_handler(id: String) -> Result<Handler, String> {
     match id.as_str() {
-        "send_ship/v_1" => Ok(Box::new(handlers::send_ship::v_1::Handler {})),
+        "send_ship/v_1" => Ok(Box::new(handlers::send_ship::v_1::Handler)),
+        "hire_specialist/v_1" => Ok(Box::new(handlers::hire_specialist::v_1::Handler)),
         _ => Err(id),
     }
 }
