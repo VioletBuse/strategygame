@@ -1,3 +1,10 @@
+mod entity;
+mod outpost;
+mod player;
+mod ship;
+mod specialist;
+mod world;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
