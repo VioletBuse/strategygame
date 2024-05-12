@@ -1,5 +1,8 @@
 use worker::*;
 
+mod game;
+mod router;
+
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     Router::new()
